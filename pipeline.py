@@ -65,7 +65,11 @@ def normalize_aem_model(data):
             for item in value:
                 visit(item, depth + 1)
     visit(model)
-    return re.sub(r'\s+', ' ', ' '.join(parts)).strip()
+    body = re.sub(r'\s+', ' ', ' '.join(parts)).strip()
+    # Fingerprint the complete model, including unknown/new authored fields.
+    # Parsing only known text fields must never hide a changed eligibility rule.
+    version = hashlib.sha256(json.dumps(model,sort_keys=True,separators=(',',':'),ensure_ascii=False,allow_nan=False).encode()).hexdigest()
+    return body + ' [official-model-sha256:' + version + ']'
 
 
 class SameHostRedirect(urllib.request.HTTPRedirectHandler):

@@ -11,7 +11,7 @@ class CubeModelTests(unittest.TestCase):
              '每筆消費請款入帳後依該筆消費之授權日判斷適用權益方案，'
              '小數點第一位四捨五入至整數位。信用額度加計50萬元。不含CUBE簽帳金融卡。')
 
-    def test_only_authored_text_is_normalized_and_metadata_order_is_stable(self):
+    def test_authored_text_is_parsed_but_complete_model_changes_revoke_fingerprint(self):
         model = {'title':'CUBE信用卡', ':items':{'main':{'text':'<p>'+self.terms+'</p>',
             'image':'https://example.invalid/99%', 'script':'fake rate 30%',
             'description':'<script>fake 99%</script>正常條款'}}, 'lastModifiedDate':123}
@@ -20,8 +20,9 @@ class CubeModelTests(unittest.TestCase):
         self.assertNotIn('fake', text)
         self.assertNotIn('example.invalid', text)
         changed = dict(reversed(list(model.items())))
-        changed['lastModifiedDate'] = 999
         self.assertEqual(text, normalize_aem_model(json.dumps(changed).encode()))
+        changed['newEligibilityField'] = 'new exclusion'
+        self.assertNotEqual(text, normalize_aem_model(json.dumps(changed).encode()))
 
     def test_other_json_or_deep_models_are_rejected(self):
         for model in [{}, [], {'title':'Other', ':items':{}}]:
