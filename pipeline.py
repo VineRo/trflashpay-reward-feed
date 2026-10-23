@@ -44,10 +44,10 @@ def normalize(html):
     return re.sub(r'\s+', ' ', ' '.join(parser.parts)).strip()
 
 
-def normalize_aem_model(data):
+def normalize_aem_model(data, expected_title="CUBE信用卡"):
     """Extract public authored text, excluding metadata, links and executable code."""
     model = json.loads(data)
-    if not isinstance(model, dict) or not isinstance(model.get(':items'), dict) or model.get('title') != 'CUBE信用卡':
+    if not isinstance(model, dict) or not isinstance(model.get(':items'), dict) or model.get('title') != expected_title:
         raise ValueError('Unsupported official content model')
     fields = {'text', 'title', 'description', 'noticeContent'}
     parts = []
@@ -95,7 +95,13 @@ def fetch(url):
         encoding = response.headers.get_content_charset() or (
             declared.group(1).decode('ascii') if declared else 'utf-8')
         if parsed.path.endswith('.model.json'):
-            text = normalize_aem_model(data)
+            titles = {
+                '/content/cub-aem-cs/zh-tw/cathaybk/personal/product/credit-card/cards/cube.model.json': 'CUBE信用卡',
+                '/content/cub-aem-cs/zh-tw/cathaybk/personal/product/credit-card/cards/i-debit.model.json': 'CUBE 簽帳金融卡',
+            }
+            if parsed.hostname != 'www.cathay-cube.com.tw' or parsed.path not in titles:
+                raise ValueError('Unregistered official content model')
+            text = normalize_aem_model(data, expected_title=titles[parsed.path])
         else:
             text = normalize(data.decode(encoding, errors='strict'))
         if len(text) < 200:
@@ -242,6 +248,9 @@ def main():
     if args.publish:
         feed = build_feed(json.loads((root / 'approved.json').read_text()), evidence,
                           json.loads((root / 'catalog.json').read_text()), wallet_evidence=wallet_evidence)
+        from eligibility_audit import build_eligibility_audit
+        audit = build_eligibility_audit(feed, evidence)
+        write_json(root / 'public' / 'eligibility-audit.json', audit)
         write_json(root / 'public' / 'rules.json', feed)
         write_json(root / 'public' / 'status.json', {
             'generatedAt': feed['generatedAt'], 'expiresAt': feed['expiresAt'],
