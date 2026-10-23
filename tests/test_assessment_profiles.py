@@ -33,3 +33,22 @@ class ProfileTests(unittest.TestCase):
         for values in [{'fullCardCoverage':True},{'conditions':[]},{'unmodeledBenefits':[]},{'sourceSha256':'bad'}]:
             bad=copy.deepcopy(p);bad.update(values)
             with self.assertRaises(ValueError):validate_profile(bad,'ctbc_linepay')
+
+    def test_supporting_document_changes_revoke_amount_calculation(self):
+        from assessment_profiles import SUPPORT_APPROVALS
+        url=next(iter(SUPPORT_APPROVALS['fubon_costco']))
+        expected=SUPPORT_APPROVALS['fubon_costco'][url]
+        rule={'cardId':'fubon_costco','promoRewardRate':1,'validUntil':'2027-12-31T23:59:59.999999+08:00'}
+        source={'url':'https://www.fubon.com/terms','sha256':'a'*64,'supportingSources':{url:{'sha256':expected}}}
+        with patch.dict('assessment_profiles.APPROVALS',{'fubon_costco':'a'*64},clear=True):
+            original=build_profiles({'fubon_costco':source},[rule],['fubon_costco'])['fubon_costco']
+            validate_profile(original,'fubon_costco')
+            self.assertEqual(original['calculation']['rounding'],'halfUp')
+            source['supportingSources'][url]={'sha256':'b'*64}
+            changed=build_profiles({'fubon_costco':source},[rule],['fubon_costco'])['fubon_costco']
+            self.assertNotEqual(original['sourceSha256'],changed['sourceSha256'])
+            self.assertIsNone(changed['calculation'])
+            source['supportingSources'][url]={'error':'unavailable'}
+            missing=build_profiles({'fubon_costco':source},[rule],['fubon_costco'])['fubon_costco']
+            self.assertTrue(missing['announcementObserved'])
+            self.assertIsNone(missing['calculation'])

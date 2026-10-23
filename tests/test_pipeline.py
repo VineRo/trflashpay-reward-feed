@@ -111,3 +111,20 @@ class CatalogSourceTests(unittest.TestCase):
             parsed = urlparse(source['url'])
             self.assertEqual(parsed.scheme, 'https')
             self.assertFalse(parsed.username or parsed.password)
+
+class SupportingDocumentTests(unittest.TestCase):
+    def test_support_documents_share_one_https_snapshot(self):
+        url='https://bank.example/terms.pdf'
+        primary_calls=[];proof_calls=[]
+        def primary(source):primary_calls.append(source);return 'official text'
+        def proof(source):proof_calls.append(source);return {'sha256':'a'*64,'format':'pdf','byteCount':100}
+        sources=[{'cardId':cid,'url':'https://bank.example/card','supportingUrls':[url]} for cid in ['a','b']]
+        result=collect(sources,downloader=primary,proof_downloader=proof)
+        self.assertEqual(len(primary_calls),1)
+        self.assertEqual(len(proof_calls),1)
+        self.assertEqual(result['a']['supportingSources'],result['b']['supportingSources'])
+    def test_support_failure_does_not_mislabel_primary_observation_as_verified(self):
+        def failed(source):raise ValueError('PDF unavailable')
+        evidence=collect([{'cardId':'a','url':'https://bank.example/card','supportingUrls':['https://bank.example/terms.pdf']}],downloader=lambda _: 'official text',proof_downloader=failed)
+        self.assertNotIn('error',evidence['a'])
+        self.assertIn('error',evidence['a']['supportingSources']['https://bank.example/terms.pdf'])

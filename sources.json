@@ -33,7 +33,10 @@
   },
   {
     "cardId": "fubon_costco",
-    "url": "https://www.fubon.com/banking/personal/credit_card/all_card/costco/costco.htm"
+    "url": "https://www.fubon.com/banking/personal/credit_card/all_card/costco/costco.htm",
+    "supportingUrls": [
+      "https://www.fubon.com/banking/document/form/TW/%E5%A5%BD%E5%A4%9A%E9%87%91%E5%9B%9E%E9%A5%8B%E8%BE%A6%E6%B3%95.pdf"
+    ]
   },
   {
     "cardId": "sinopac_sport",

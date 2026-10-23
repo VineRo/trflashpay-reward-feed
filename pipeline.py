@@ -72,6 +72,18 @@ def fetch(url):
         return text
 
 
+def fetch_proof(url):
+    parsed = urlparse(url)
+    if parsed.scheme != 'https' or not parsed.hostname or parsed.username or parsed.password or parsed.fragment:
+        raise ValueError('Only explicit HTTPS document sources are allowed')
+    request = urllib.request.Request(url, headers={'User-Agent': 'TRFlashPay-Official-Rules-Monitor/1.0'})
+    with urllib.request.build_opener(SameHostRedirect()).open(request, timeout=20) as response:
+        data = response.read(LIMIT + 1)
+        if response.status != 200 or len(data) > LIMIT or not data.startswith(b'%PDF-'):
+            raise ValueError('Official terms document is unavailable or not a bounded PDF')
+        return {'sha256': hashlib.sha256(data).hexdigest(), 'format': 'pdf', 'byteCount': len(data)}
+
+
 def write_json(path, value):
     path.parent.mkdir(parents=True, exist_ok=True)
     with tempfile.NamedTemporaryFile(mode='w', encoding='utf-8', dir=path.parent, delete=False) as file:
@@ -81,8 +93,8 @@ def write_json(path, value):
     os.replace(name, path)
 
 
-def collect(sources, downloader=fetch):
-    result, documents = {}, {}
+def collect(sources, downloader=fetch, proof_downloader=fetch_proof):
+    result, documents, proofs = {}, {}, {}
     for source in sources:
         cid = source['cardId']
         if cid in result:
@@ -97,6 +109,17 @@ def collect(sources, downloader=fetch):
                 documents[url] = {'url': url, 'error': str(error)}
         # Cards sharing a terms page use one consistent source snapshot.
         result[cid] = dict(documents[url])
+        support = source.get('supportingUrls', [])
+        if not isinstance(support,list) or len(support)>5 or any(not isinstance(u,str) for u in support) or len(set(support))!=len(support):
+            raise ValueError('Invalid supporting source registry')
+        result[cid]['supportingSources'] = {}
+        for proof_url in support:
+            if proof_url not in proofs:
+                try:
+                    proofs[proof_url] = {'url': proof_url, **proof_downloader(proof_url)}
+                except Exception as error:
+                    proofs[proof_url] = {'url': proof_url, 'error': str(error)}
+            result[cid]['supportingSources'][proof_url] = dict(proofs[proof_url])
     return result
 
 
@@ -192,11 +215,13 @@ def main():
             'coverageCount': len(feed['coverage']), 'pending': feed['pending'],
             'sourceCount': len(evidence),
             'assessmentProfileCount': len(feed['assessmentProfiles']),
-            'conditionalBasicPlanCount': sum(p['calculation'] is not None for p in feed['assessmentProfiles'].values()),
+            'conditionalBasicPlanCount': sum(p['calculation'] is not None and p['calculation']['rounding'] != 'notModeled' for p in feed['assessmentProfiles'].values()),
+            'conditionalRateOnlyPlanCount': sum(p['calculation'] is not None and p['calculation']['rounding'] == 'notModeled' for p in feed['assessmentProfiles'].values()),
             'fullyModeledCardCount': 0,
             'readableSourceCount': sum(bool(value.get('text')) for value in evidence.values()),
             'sources': {cid: {'url': value['url'], 'sha256': value.get('sha256'),
-                               'error': value.get('error')}
+                               'error': value.get('error'),
+                               'supportingSources': value.get('supportingSources', {})}
                         for cid, value in evidence.items()},
         })
         # Changed sources revoke their rules in the new feed rather than leave
