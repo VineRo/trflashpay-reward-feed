@@ -179,7 +179,7 @@ def compile_rules(approved, evidence, now=None):
     return rules
 
 
-def build_feed(approved, evidence, coverage, now=None):
+def build_feed(approved, evidence, coverage, now=None, wallet_evidence=None):
     now = now or datetime.now(timezone.utc)
     if not isinstance(coverage, list) or not coverage or len(set(coverage)) != len(coverage):
         raise ValueError('Invalid managed catalog')
@@ -214,7 +214,10 @@ def build_feed(approved, evidence, coverage, now=None):
     profiles = build_profiles(evidence, rules, coverage)
     for cid, profile in profiles.items():
         validate_profile(profile, cid)
+    from wallet_campaigns import build_wallet_campaigns
+    campaigns, campaign_pending = build_wallet_campaigns(wallet_evidence or {}, now)
     return {
+        'walletCampaigns': campaigns, 'walletCampaignPending': campaign_pending,
         'assessmentProfiles': profiles,
         'schemaVersion': 1,
         'revision': int(now.timestamp() * 1000000),
@@ -234,9 +237,11 @@ def main():
     root = args.root
     evidence = collect(json.loads((root / 'sources.json').read_text()))
     write_json(root / 'artifacts' / 'evidence.json', evidence)
+    wallet_evidence = collect(json.loads((root / 'wallet_sources.json').read_text()))
+    write_json(root / 'artifacts' / 'wallet_evidence.json', wallet_evidence)
     if args.publish:
         feed = build_feed(json.loads((root / 'approved.json').read_text()), evidence,
-                          json.loads((root / 'catalog.json').read_text()))
+                          json.loads((root / 'catalog.json').read_text()), wallet_evidence=wallet_evidence)
         write_json(root / 'public' / 'rules.json', feed)
         write_json(root / 'public' / 'status.json', {
             'generatedAt': feed['generatedAt'], 'expiresAt': feed['expiresAt'],
@@ -245,6 +250,10 @@ def main():
             'eligibilityPending': [r['cardId'] for r in feed['rules'] if r.get('verificationRequiredReason')],
             'coverageCount': len(feed['coverage']), 'pending': feed['pending'],
             'sourceCount': len(evidence),
+            'walletCampaignCount': len(feed['walletCampaigns']),
+            'walletCampaignPending': feed['walletCampaignPending'],
+            'walletSourceCount': len(wallet_evidence),
+            'walletSources': {sid:{'url':v['url'],'sha256':v.get('sha256'),'error':v.get('error')} for sid,v in wallet_evidence.items()},
             'assessmentProfileCount': len(feed['assessmentProfiles']),
             'conditionalBasicPlanCount': sum(p['calculation'] is not None and p['calculation']['rounding'] != 'notModeled' for p in feed['assessmentProfiles'].values()),
             'conditionalRateOnlyPlanCount': sum(p['calculation'] is not None and p['calculation']['rounding'] == 'notModeled' for p in feed['assessmentProfiles'].values()),
