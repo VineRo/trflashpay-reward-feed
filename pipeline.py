@@ -156,7 +156,12 @@ def build_feed(approved, evidence, coverage, now=None):
         if cid not in verified:
             from pending_status import pending_reason
             pending.setdefault(cid, pending_reason(cid, evidence.get(cid, {})))
+    from assessment_profiles import build_profiles, validate_profile
+    profiles = build_profiles(evidence, rules, coverage)
+    for cid, profile in profiles.items():
+        validate_profile(profile, cid)
     return {
+        'assessmentProfiles': profiles,
         'schemaVersion': 1,
         'revision': int(now.timestamp() * 1000000),
         'generatedAt': now.isoformat(),
@@ -186,6 +191,9 @@ def main():
             'eligibilityPending': [r['cardId'] for r in feed['rules'] if r.get('verificationRequiredReason')],
             'coverageCount': len(feed['coverage']), 'pending': feed['pending'],
             'sourceCount': len(evidence),
+            'assessmentProfileCount': len(feed['assessmentProfiles']),
+            'conditionalBasicPlanCount': sum(p['calculation'] is not None for p in feed['assessmentProfiles'].values()),
+            'fullyModeledCardCount': 0,
             'readableSourceCount': sum(bool(value.get('text')) for value in evidence.values()),
             'sources': {cid: {'url': value['url'], 'sha256': value.get('sha256'),
                                'error': value.get('error')}

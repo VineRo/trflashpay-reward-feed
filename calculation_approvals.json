@@ -1,4 +1,8 @@
 {
   "ctbc_linepay": "0631277b26c6aceceb37a5f182cfe2b1434ce3a52f9d9a68415bf7bed3b4ac57",
-  "ctbc_linepay_debit": "0631277b26c6aceceb37a5f182cfe2b1434ce3a52f9d9a68415bf7bed3b4ac57"
+  "ctbc_linepay_debit": "0631277b26c6aceceb37a5f182cfe2b1434ce3a52f9d9a68415bf7bed3b4ac57",
+  "taishin_gogo": "7c46b30a21cf5e464a39950277d0c1fd9b2c272b3caafc22d5b8fa3473fcd0c5",
+  "jkopay_card": "ca4bb097a74644c5197e8f8287015d1f6dc59d34bfa437b02e91756a424a195a",
+  "esun_ubear": "184c616c06d70163fa3d710fcce6e42071398c8f9a0f975e84859c944243eea8",
+  "esun_unicard": "d10d01f2d179ee7761f8d13cb630144ea4bbed38a22262f308b68cf864fe56b1"
 }
