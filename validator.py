@@ -52,6 +52,16 @@ def validate(rule):
     reason = rule['verificationRequiredReason']
     require(reason is None or (isinstance(reason, str) and reason.strip()), 'Invalid verification reason')
     date(rule['validUntil'])
+    terms = rule.get('issuerTerms')
+    if terms is not None:
+        require(isinstance(terms, dict) and set(terms) == {
+            'version', 'kind', 'rate', 'rounding', 'validFrom', 'validUntil'}, 'Invalid calculation schema')
+        require(type(terms['version']) is int and terms['version'] == 1 and
+                terms['kind'] == 'ctbcLinePayGeneral' and terms['rounding'] == 'halfUp', 'Unsupported calculation')
+        require(rule['cardId'] in {'ctbc_linepay', 'ctbc_linepay_debit'}, 'Wrong issuer calculation')
+        require(rate(terms['rate']) and terms['rate'] == rule['promoRewardRate'], 'Inconsistent calculation rate')
+        require(date(terms['validFrom']) < date(terms['validUntil']) == date(rule['validUntil']), 'Inconsistent calculation validity')
+        require(bool(rule.get('verificationRequiredReason')), 'Conditional plan must retain qualification warning')
     if 'activeDaysOfWeek' in rule and rule['activeDaysOfWeek'] is not None:
         require(isinstance(rule['activeDaysOfWeek'], list) and all(type(d) is int and 1 <= d <= 7 for d in rule['activeDaysOfWeek']), 'Invalid weekday')
     if 'requiresAccount' in rule:

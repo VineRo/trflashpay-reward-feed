@@ -1,4 +1,5 @@
 import unittest
+from unittest.mock import patch
 from datetime import datetime, timezone
 from adapters import ctbc, ubear, observe
 
@@ -94,4 +95,43 @@ class ExtendedAdapterTests(unittest.TestCase):
         self.assertEqual(rule['cardType'], 'debitCard')
         self.assertEqual(rule['cardId'], 'ctbc_linepay_debit')
         self.assertIn('2026-11-30', rule['validUntil'])
+        self.assertTrue(rule['verificationRequiredReason'])
+
+class ConditionalMetadataTests(unittest.TestCase):
+    def test_conditional_metadata_preserves_own_dates_and_rate(self):
+        from adapters import ctbc
+        source = AdapterTests().ctbc_source()
+        source['sha256'] = 'reviewed-fixture'
+        with patch.dict('adapters.CALCULATION_APPROVALS', {'ctbc_linepay': 'reviewed-fixture'}, clear=True):
+            rule = ctbc(source, AdapterTests.now)
+        self.assertEqual(rule['issuerTerms']['rate'], rule['promoRewardRate'])
+        self.assertEqual(rule['issuerTerms']['validUntil'], rule['validUntil'])
+        self.assertEqual(rule['issuerTerms']['rounding'], 'halfUp')
+        self.assertTrue(rule['verificationRequiredReason'])
+
+    def test_invalid_conditional_metadata_never_publishes(self):
+        import copy
+        from adapters import ctbc
+        from validator import validate
+        source = AdapterTests().ctbc_source()
+        source['sha256'] = 'reviewed-fixture'
+        with patch.dict('adapters.CALCULATION_APPROVALS', {'ctbc_linepay': 'reviewed-fixture'}, clear=True):
+            rule = ctbc(source, AdapterTests.now)
+        for fields in [{'rate': 9}, {'version': True}, {'rounding': 'floor'},
+                       {'validFrom': '2027-01-01T00:00:00+08:00'}, {'unknown': True}]:
+            with self.subTest(fields=fields), self.assertRaises(ValueError):
+                bad = copy.deepcopy(rule)
+                bad['issuerTerms'].update(fields)
+                validate(bad)
+        rule['verificationRequiredReason'] = None
+        with self.assertRaises(ValueError):
+            validate(rule)
+
+    def test_changed_terms_keep_observation_but_revoke_calculation(self):
+        from adapters import ctbc
+        source = AdapterTests().ctbc_source()
+        source['sha256'] = 'unreviewed-change'
+        rule = ctbc(source, AdapterTests.now)
+        self.assertEqual(rule['promoRewardRate'], 1)
+        self.assertNotIn('issuerTerms', rule)
         self.assertTrue(rule['verificationRequiredReason'])

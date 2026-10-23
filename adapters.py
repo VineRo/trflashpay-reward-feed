@@ -5,9 +5,12 @@ establish member eligibility, issuer transaction coding, or remaining quota.
 All adapter results MUST retain verificationRequiredReason.
 """
 import re
+import json
+from pathlib import Path
 from datetime import datetime, time, timezone, timedelta
 
 TZ = timezone(timedelta(hours=8))
+CALCULATION_APPROVALS = json.loads(Path(__file__).with_name('calculation_approvals.json').read_text())
 
 
 def one(pattern, text):
@@ -50,6 +53,15 @@ def template(cid, name, bank, source, rate, expiry, tags):
     }
 
 
+def ctbc_terms(source, rate, expiry, debit=False):
+    prefix = 'LINE Pay簽帳金融卡自' if debit else 'LINE Pay信用卡自'
+    parts = one(re.escape(prefix) + r'(\d{4})/(\d{1,2})/(\d{1,2})~(\d{4})/(\d{1,2})/(\d{1,2})', source['text'])
+    y, m, d = map(int, parts[:3])
+    return {'version': 1, 'kind': 'ctbcLinePayGeneral', 'rate': rate,
+            'rounding': 'halfUp', 'validFrom': datetime(y, m, d, tzinfo=TZ).isoformat(),
+            'validUntil': expiry}
+
+
 def ctbc(source, now):
     text = source['text']
     credit, debit = one(
@@ -62,8 +74,11 @@ def ctbc(source, now):
         raise ValueError('Missing known eligibility/rounding terms')
     expiry = validity(text,
         r'LINE Pay信用卡自(\d{4})/(\d{1,2})/(\d{1,2})~(\d{4})/(\d{1,2})/(\d{1,2})為止', now)
-    return template('ctbc_linepay', '中國信託 LINE Pay 信用卡', '中國信託', source,
+    rule = template('ctbc_linepay', '中國信託 LINE Pay 信用卡', '中國信託', source,
                     rate, expiry, ['臺灣 LINE Pay 有效綁定', '限一般消費', '分期與除外交易不適用', '逐筆四捨五入至整數點'])
+    if source.get('sha256') and source['sha256'] == CALCULATION_APPROVALS.get('ctbc_linepay'):
+        rule['issuerTerms'] = ctbc_terms(source, rate, expiry)
+    return rule
 
 
 def ubear(source, now):
@@ -94,6 +109,9 @@ def ctbc_debit(source, now):
                 cardType='debitCard', promoRewardRate=float(debit), validUntil=expiry,
                 promoDescription=f'簽帳金融卡一般消費公告 {float(debit):g}%；交易資格待確認',
                 badgeText=f'簽帳一般消費公告 {float(debit):g}%')
+    rule.pop('issuerTerms', None)
+    if source.get('sha256') and source['sha256'] == CALCULATION_APPROVALS.get('ctbc_linepay_debit'):
+        rule['issuerTerms'] = ctbc_terms(source, float(debit), expiry, debit=True)
     return rule
 
 
