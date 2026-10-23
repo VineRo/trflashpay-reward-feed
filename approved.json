@@ -1,0 +1,34 @@
+[
+  {
+    "sourceSha256": "0631277b26c6aceceb37a5f182cfe2b1434ce3a52f9d9a68415bf7bed3b4ac57",
+    "rule": {
+      "cardId": "ctbc_linepay",
+      "cardName": "中國信託 LINE Pay 信用卡",
+      "bankName": "中國信託",
+      "cardType": "creditCard",
+      "supportedPlatforms": [
+        "linePay"
+      ],
+      "defaultRewardRate": 0.0,
+      "promoRewardRate": 1.0,
+      "promoDescription": "2026 年一般消費公告 1% LINE POINTS；須符合會員綁定及一般消費認列，除外交易不適用。",
+      "badgeText": "一般消費公告 1%",
+      "conditionTags": [
+        "臺灣 LINE Pay 有效綁定",
+        "限一般消費",
+        "分期與不回饋項目不適用",
+        "逐筆四捨五入至整數點",
+        "交易資格待確認"
+      ],
+      "officialUrl": "https://www.ctbcbank.com/content/dam/minisite/long/creditcard/LINEPay/notice.html",
+      "validUntil": "2026-12-31T23:59:59+08:00",
+      "schemes": null,
+      "merchantRates": null,
+      "requiresAccount": false,
+      "accountTierRate": null,
+      "bonusAllowedPlatforms": null,
+      "activeDaysOfWeek": null,
+      "verificationRequiredReason": "需確認臺灣 LINE Pay 綁定、一般消費認列與除外交易；目前無法確定此筆回饋"
+    }
+  }
+]
