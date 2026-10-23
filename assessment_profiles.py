@@ -38,7 +38,8 @@ COMMON = [
  ('paymentRoute','payment','此商家與付款資金來源確實支援所選支付路徑','transaction'),
  ('generalSpend','issuerDecision','本筆符合此基本方案的一般消費認列及完整排除清單','issuerDecision'),
  ('nonInstallment','transaction','本筆非分期、非自動加值及非預借現金','transaction'),
- ('netTwdCharge','transaction','金額為折抵與退款後實際刷卡的新臺幣淨額','transaction'),
+ ('netTwdCharge','transaction','金額為折抵後實際刷卡的新臺幣淨額，不含國外交易手續費等不回饋款項','transaction'),
+ ('noRefundAdjustment','transaction','本次為新消費，尚無入帳後退貨、退稅、爭議或調整；本模型不處理歷史退款','transaction'),
 ]
 SPECIFIC = {
  'ctbc_linepay': [('lineBinding','membership','交易與回饋時有效綁定正常臺灣 LINE Pay 帳號','userProfile')],
