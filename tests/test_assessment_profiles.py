@@ -17,7 +17,7 @@ class ProfileTests(unittest.TestCase):
             self.assertTrue(p['unmodeledBenefits'])
             self.assertIsNone(p['calculation'])
     def test_changed_evidence_revokes_calculation_but_retains_observation(self):
-        rule={'cardId':'jkopay_card','promoRewardRate':1,'validUntil':'2026-12-31T23:59:59.999999+08:00'}
+        rule={'officialUrl':'https://bank.example/terms','cardId':'jkopay_card','promoRewardRate':1,'validUntil':'2026-12-31T23:59:59.999999+08:00'}
         source={'sha256':'a'*64,'url':'https://www.taishinbank.com.tw/terms'}
         with patch.dict('assessment_profiles.APPROVALS',{'jkopay_card':'a'*64},clear=True):
             p=build_profiles({'jkopay_card':source},[rule],['jkopay_card'])['jkopay_card']
@@ -38,7 +38,7 @@ class ProfileTests(unittest.TestCase):
         from assessment_profiles import SUPPORT_APPROVALS
         url=next(iter(SUPPORT_APPROVALS['fubon_costco']))
         expected=SUPPORT_APPROVALS['fubon_costco'][url]
-        rule={'cardId':'fubon_costco','promoRewardRate':1,'validUntil':'2027-12-31T23:59:59.999999+08:00'}
+        rule={'officialUrl':'https://bank.example/terms','cardId':'fubon_costco','promoRewardRate':1,'validUntil':'2027-12-31T23:59:59.999999+08:00'}
         source={'url':'https://www.fubon.com/terms','sha256':'a'*64,'supportingSources':{url:{'sha256':expected}}}
         with patch.dict('assessment_profiles.APPROVALS',{'fubon_costco':'a'*64},clear=True):
             original=build_profiles({'fubon_costco':source},[rule],['fubon_costco'])['fubon_costco']
@@ -52,3 +52,24 @@ class ProfileTests(unittest.TestCase):
             missing=build_profiles({'fubon_costco':source},[rule],['fubon_costco'])['fubon_costco']
             self.assertTrue(missing['announcementObserved'])
             self.assertIsNone(missing['calculation'])
+
+    def test_jpoints_amount_requires_stable_qualification_and_exact_variant(self):
+        from assessment_profiles import APPROVALS
+        cid='fubon_j'
+        rule={'officialUrl':'https://bank.example/terms','cardId':cid,'promoRewardRate':1,'validUntil':'2026-12-31T23:59:59.999999+08:00'}
+        p=build_profiles({cid:{'sha256':APPROVALS[cid],'url':'https://www.fubon.com/terms'}},[rule],[cid])[cid]
+        validate_profile(p,cid)
+        self.assertEqual(p['calculation']['kind'],'jPointsGeneralPlan')
+        self.assertEqual(p['calculation']['unit'],'LINE POINTS')
+        self.assertEqual(p['calculation']['rounding'],'floor')
+        self.assertIn('stableRewardEligibility',p['calculation']['requiredConditionIds'])
+        self.assertIn('cardVariant',p['calculation']['requiredConditionIds'])
+
+    def test_sport_nominal_rate_still_requires_dacard_data_qualification(self):
+        from assessment_profiles import APPROVALS
+        cid='sinopac_sport'
+        rule={'officialUrl':'https://bank.example/terms','cardId':cid,'promoRewardRate':1,'validUntil':'2026-12-31T23:59:59.999999+08:00'}
+        p=build_profiles({cid:{'sha256':APPROVALS[cid],'url':'https://bank.sinopac.com/terms'}},[rule],[cid])[cid]
+        validate_profile(p,cid)
+        self.assertIn('dacardLinked',p['calculation']['requiredConditionIds'])
+        self.assertEqual(p['calculation']['rounding'],'notModeled')

@@ -1,7 +1,7 @@
 """Explain unsupported sources without inventing universal reward rates."""
 import re
 REASONS = {
- 'cathay_cube': 'CUBE 須核對當期方案、等級與支付排除條款；舊 2024 活動頁已移除',
+ 'cathay_cube': 'CUBE 須核對當期方案與完整排除條款；固定回饋以外方案未建模，來源異動時暫停公式',
  'cathay_debit': '國泰簽帳金融卡須區分卡別與當期權益，尚無完整可驗證規則',
  'chb_my_happy': 'My樂基本權益公告未列明有效期間；六大通路與支付排除條款尚待建模',
  'jko_richart_account': '街利存須核對開戶日、存款任務、資料授權、會員等級及跨月回饋期間',

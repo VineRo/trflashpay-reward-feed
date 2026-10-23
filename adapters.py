@@ -115,6 +115,23 @@ def ctbc_debit(source, now):
     return rule
 
 
+
+def cube_fixed_domestic(source, now):
+    text = re.sub(r'\s+', '', source['text'])
+    expiry = validity(text,
+        r'「固定回饋」權益方案適用期間：(\d{4})/(\d{1,2})/(\d{1,2})-(\d{4})/(\d{1,2})/(\d{1,2})', now)
+    value = float(consistent(r'一般消費\(不含保費\)([0-9]+(?:\.[0-9]+)?)%、海外實體消費', text))
+    if any(term not in text for term in ['每筆消費請款入帳後', '小數點第一位四捨五入至整數位',
+        '依該筆消費之授權日判斷適用權益方案', '信用額度', '50萬元', '不含CUBE簽帳金融卡']):
+        raise ValueError('Missing CUBE recognition or calculation conditions')
+    rule = ordinary_observation('cathay_cube', '國泰 CUBE 信用卡（固定回饋國內基本方案）', '國泰世華銀行', source,
+        value, expiry, ['僅固定回饋方案之國內一般消費，不含保費及分期',
+        '依授權日生效方案及銀行一般消費排除清單', '指定通路、海外及優惠券尚未納入',
+        '每筆小樹點四捨五入；跨認列上限情境不試算'], ['linePay', 'jkoPay', 'applePay', 'googlePay'])
+    rule['officialUrl'] = 'https://www.cathay-cube.com.tw/cathaybk/personal/product/credit-card/cards/cube'
+    return rule
+
+
 def fubon_j(source, now):
     text = re.sub(r'\s+', '', source['text'])
     rate = float(consistent(r'國內及其他海外地區一般消費享最高([0-9]+(?:\.[0-9]+)?)%', text))
@@ -130,7 +147,7 @@ def fubon_j(source, now):
     rule = template('fubon_j', '台北富邦 J 卡（回饋版本待確認）', '富邦銀行', source, rate, expiry,
         ['需確認 J Cash／J Points 卡別', '限國內一般消費，非日韓泰旅遊加碼',
          '自動扣繳／電子帳單設定及生效時點待確認', f'未達公告條件時標示 {fallback:g}%，仍需認列一般消費',
-         'J Points 須有效綁定臺灣 LINE Pay', '取整方式為無條件捨去至整數，請款期限另核對'])
+         'J Points 須有效綁定臺灣 LINE Pay', 'J Points 每筆取整至整數；J Cash 結算不同，不互套', '資格生效時點有不同敘述，異動情境暫不試算'])
     rule['promoDescription'] = f'國內一般消費公告最高 {rate:g}%；不是旅遊或限量活動加碼，適用資格待確認'
     return rule
 
@@ -262,7 +279,7 @@ def jko_card(source, now):
 
 
 ADAPTERS = {'ctbc_linepay': ctbc, 'ctbc_linepay_debit': ctbc_debit,
-            'esun_ubear': ubear, 'fubon_j': fubon_j,
+            'esun_ubear': ubear, 'fubon_j': fubon_j, 'cathay_cube': cube_fixed_domestic,
             'taishin_gogo': taishin_richart, 'taishin_richart_debit': richart_debit, 'jkopay_card': jko_card,
             'federal_jihe': federal_jihe, 'esun_unicard': unicard,
             'fubon_costco': fubon_costco, 'sinopac_sport': sport}

@@ -44,6 +44,30 @@ def normalize(html):
     return re.sub(r'\s+', ' ', ' '.join(parser.parts)).strip()
 
 
+def normalize_aem_model(data):
+    """Extract public authored text, excluding metadata, links and executable code."""
+    model = json.loads(data)
+    if not isinstance(model, dict) or not isinstance(model.get(':items'), dict) or model.get('title') != 'CUBE信用卡':
+        raise ValueError('Unsupported official content model')
+    fields = {'text', 'title', 'description', 'noticeContent'}
+    parts = []
+    def visit(value, depth=0):
+        if depth > 40:
+            raise ValueError('Official model exceeds nesting limit')
+        if isinstance(value, dict):
+            for key in sorted(value):
+                item = value[key]
+                if key in fields and isinstance(item, str):
+                    parts.append(normalize(item))
+                elif isinstance(item, (dict, list)):
+                    visit(item, depth + 1)
+        elif isinstance(value, list):
+            for item in value:
+                visit(item, depth + 1)
+    visit(model)
+    return re.sub(r'\s+', ' ', ' '.join(parts)).strip()
+
+
 class SameHostRedirect(urllib.request.HTTPRedirectHandler):
     def redirect_request(self, req, fp, code, msg, headers, newurl):
         old, new = urlparse(req.full_url), urlparse(newurl)
@@ -66,7 +90,10 @@ def fetch(url):
         declared = re.search(rb'<meta[^>]+charset=[\"\']?([a-zA-Z0-9_-]+)', data, re.I)
         encoding = response.headers.get_content_charset() or (
             declared.group(1).decode('ascii') if declared else 'utf-8')
-        text = normalize(data.decode(encoding, errors='strict'))
+        if parsed.path.endswith('.model.json'):
+            text = normalize_aem_model(data)
+        else:
+            text = normalize(data.decode(encoding, errors='strict'))
         if len(text) < 200:
             raise ValueError('Source has too little readable text; cannot verify')
         return text
