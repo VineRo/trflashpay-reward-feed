@@ -40,3 +40,16 @@ class EligibilityAuditTests(unittest.TestCase):
         text=normalize_aem_model(data,expected_title='CUBE 簽帳金融卡')
         self.assertIn('0.3%',text)
         self.assertIn('official-model-sha256',text)
+
+    def test_stale_formula_cannot_be_reported_against_changed_or_failed_source(self):
+        from assessment_profiles import build_profiles, APPROVALS
+        cid='jkopay_card'
+        source={'url':'https://www.taishinbank.com.tw/terms','sha256':APPROVALS[cid],'text':'official snapshot'}
+        rule={'officialUrl':source['url'],'cardId':cid,'promoRewardRate':1,'validUntil':'2026-12-31T23:59:59.999999+08:00'}
+        profiles=build_profiles({cid:source},[rule],[cid])
+        feed=self.feed();feed['coverage']=[cid];feed['assessmentProfiles']=profiles
+        audit=build_eligibility_audit(feed,{cid:source})
+        self.assertEqual(audit['conditionalAmountCount'],1)
+        self.assertFalse(audit['sources'][0]['transactionEligibilityVerified'])
+        for changed in [{**source,'sha256':'0'*64},{**source,'error':'unavailable'},{}]:
+            with self.assertRaises(ValueError):build_eligibility_audit(feed,{cid:changed})

@@ -1,6 +1,6 @@
 """Publish every unresolved eligibility dependency without claiming entitlement."""
 from datetime import datetime
-from assessment_profiles import validate_profile
+from assessment_profiles import validate_profile, source_digest
 
 RESPONSIBILITY = {
     'userProfile': '使用者提供當期有效資料',
@@ -25,6 +25,15 @@ def build_eligibility_audit(feed, evidence):
         source = evidence.get(cid, {})
         readable = bool(source.get('text')) and not source.get('error')
         calc = p['calculation']
+        if calc:
+            supporting = source.get('supportingSources', {})
+            digest = source_digest(source.get('sha256'), {url: v.get('sha256') for url, v in supporting.items()})
+            if not readable or digest != p['sourceSha256'] or any(v.get('error') for v in supporting.values()):
+                raise ValueError('Calculation audit source differs from the current evidence')
+            start = datetime.fromisoformat(calc['validFrom']) if calc['validFrom'] else None
+            end = datetime.fromisoformat(calc['validUntil'])
+            if (start and generated < start) or generated > end:
+                raise ValueError('Calculation is outside its current valid period')
         # A formula's existence never verifies an individual's current facts.
         kind = ('conditionalAmount' if calc and calc['rounding'] != 'notModeled'
                 else 'nominalRateOnly' if calc else 'notModeled')
