@@ -135,3 +135,55 @@ class ConditionalMetadataTests(unittest.TestCase):
         self.assertEqual(rule['promoRewardRate'], 1)
         self.assertNotIn('issuerTerms', rule)
         self.assertTrue(rule['verificationRequiredReason'])
+
+class TaiwanGeneralOfferTests(unittest.TestCase):
+    now = AdapterTests.now
+
+    def source(self, text):
+        return {'url': 'https://issuer.example/terms', 'text': text}
+
+    def fixtures(self):
+        return {
+            'federal_jihe': '國內消費1%回饋無上限係指聯邦吉鶴卡原權益國內一般消費1%回饋 需以新台幣請款 活動期間：115/7/1-115/12/31 日本最高11%',
+            'esun_unicard': '一般消費最高享1%活動期間：2026/7/1~2026/12/31 一般消費享1%玉山epoint回饋，需同時申辦帳單e化及申辦玉山銀行臺幣帳戶自動扣繳 成功扣繳卡費 逐筆四捨五入 指定方案4.5%',
+            'fubon_costco': '店外一般消費1%好多金回饋無上限活動日期：即日起~2027/12/31活動內容 於店外一般消費享1%好多金回饋無上限 不予計算好多金 店內2%高鐵8%',
+            'sinopac_sport': '國內外一般消費基本回饋電子化帳單加碼0.7%，須於當月帳單結帳日前，完成設定電子或行動帳單，方可符合最高1%回饋資格，否則僅享0.3%回饋 大咖DACARD 一、活動期間：2026/7/1-12/31二、活動內容 指定支付最高5%',
+        }
+
+    def test_general_plan_never_uses_other_marketing_maximum(self):
+        from adapters import ADAPTERS
+        from validator import validate
+        for cid, text in self.fixtures().items():
+            with self.subTest(card=cid):
+                rule = ADAPTERS[cid](self.source(text), self.now)
+                validate(rule)
+                self.assertEqual(rule['promoRewardRate'], 1)
+                self.assertEqual(rule['defaultRewardRate'], 0)
+                self.assertTrue(rule['verificationRequiredReason'])
+                self.assertNotIn('issuerTerms', rule)
+                self.assertIn('一般消費', rule['badgeText'])
+
+    def test_roc_and_partial_year_dates_are_real_and_expire(self):
+        from adapters import ADAPTERS
+        for cid in ['federal_jihe', 'sinopac_sport', 'esun_unicard']:
+            text = self.fixtures()[cid]
+            self.assertTrue(ADAPTERS[cid](self.source(text), self.now)['validUntil'].startswith('2026-12-31'))
+            with self.assertRaises(ValueError):
+                ADAPTERS[cid](self.source(text), datetime(2027, 1, 1, tzinfo=timezone.utc))
+        with self.assertRaises(ValueError):
+            ADAPTERS['fubon_costco'](self.source(self.fixtures()['fubon_costco']), datetime(2028, 1, 1, tzinfo=timezone.utc))
+
+    def test_conflicts_and_missing_qualification_fail_closed(self):
+        from adapters import ADAPTERS
+        changes = {
+            'federal_jihe': ('原權益國內一般消費1%', '原權益國內一般消費2%'),
+            'esun_unicard': ('一般消費享1%', '一般消費享2%'),
+            'fubon_costco': ('於店外一般消費享1%', '於店外一般消費享2%'),
+            'sinopac_sport': ('加碼0.7%', '加碼0.8%'),
+        }
+        for cid, (old, new) in changes.items():
+            with self.subTest(card=cid), self.assertRaises(ValueError):
+                ADAPTERS[cid](self.source(self.fixtures()[cid].replace(old, new)), self.now)
+        for cid, term in [('federal_jihe', '需以新台幣請款'), ('esun_unicard', '成功扣繳卡費'), ('fubon_costco', '不予計算好多金'), ('sinopac_sport', '大咖DACARD')]:
+            with self.subTest(card=cid), self.assertRaises(ValueError):
+                ADAPTERS[cid](self.source(self.fixtures()[cid].replace(term, '')), self.now)

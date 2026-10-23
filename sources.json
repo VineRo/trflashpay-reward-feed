@@ -22,5 +22,21 @@
   {
     "cardId": "ctbc_linepay_debit",
     "url": "https://www.ctbcbank.com/content/dam/minisite/long/creditcard/LINEPay/notice.html"
+  },
+  {
+    "cardId": "federal_jihe",
+    "url": "https://activity.ubot.com.tw/2026JiHoCard/domestic.htm"
+  },
+  {
+    "cardId": "esun_unicard",
+    "url": "https://www.esunbank.com/zh-tw/personal/credit-card/intro/bank-card/unicard"
+  },
+  {
+    "cardId": "fubon_costco",
+    "url": "https://www.fubon.com/banking/personal/credit_card/all_card/costco/costco.htm"
+  },
+  {
+    "cardId": "sinopac_sport",
+    "url": "https://bank.sinopac.com/sinopacBT/personal/credit-card/introduction/bankcard/sportcard.html?previousPage=other+articles&source=2"
   }
 ]

@@ -135,8 +135,74 @@ def fubon_j(source, now):
     return rule
 
 
+def ordinary_observation(cid, name, bank, source, rate, expiry, tags, platforms):
+    rule = template(cid, name, bank, source, rate, expiry,
+                    ['僅記錄一般消費基本方案，不含其他加碼', *tags])
+    rule['supportedPlatforms'] = platforms
+    rule['badgeText'] = f'一般消費公告最高 {rate:g}%'
+    rule['promoDescription'] = f'一般消費基本方案公告最高 {rate:g}%；指定通路、新戶及限量加碼未納入，行動支付認列與資格待確認'
+    return rule
+
+
+def federal_jihe(source, now):
+    text = re.sub(r'\s+', '', source['text'])
+    first, second = one(r'國內消費([0-9]+(?:\.[0-9]+)?)%回饋無上限係指聯邦吉鶴卡原權益國內一般消費([0-9]+(?:\.[0-9]+)?)%回饋', text)
+    if first != second or '需以新台幣請款' not in text:
+        raise ValueError('Conflicting domestic base rate or currency scope')
+    parts = consistent(r'活動期間：(\d{3})/(\d{1,2})/(\d{1,2})-(\d{3})/(\d{1,2})/(\d{1,2})', text)
+    y, m, d, ey, em, ed = map(int, parts)
+    window = f'{y + 1911}/{m}/{d}~{ey + 1911}/{em}/{ed}'
+    expiry = validity(window, r'(\d{4})/(\d{1,2})/(\d{1,2})~(\d{4})/(\d{1,2})/(\d{1,2})', now)
+    return ordinary_observation('federal_jihe', '聯邦吉鶴卡', '聯邦銀行', source, float(first), expiry,
+        ['需以新臺幣請款且認列國內一般消費', '不含日本、日系名店、新戶及需登錄加碼'], ['linePay', 'jkoPay'])
+
+
+def unicard(source, now):
+    text = re.sub(r'\s+', '', source['text'])
+    parts = one(r'一般消費最高享([0-9]+(?:\.[0-9]+)?)%活動期間：(\d{4})/(\d{1,2})/(\d{1,2})~(\d{4})/(\d{1,2})/(\d{1,2})', text)
+    rate = float(parts[0])
+    qualified = float(consistent(r'一般消費享([0-9]+(?:\.[0-9]+)?)%玉山epoint回饋，需同時申辦帳單e化及申辦玉山銀行臺幣帳戶自動扣繳', text))
+    if rate != qualified or '成功扣繳卡費' not in text or '逐筆四捨五入' not in text:
+        raise ValueError('Missing or conflicting base qualification terms')
+    y, m, d, ey, em, ed = parts[1:]
+    expiry = validity(f'{y}/{m}/{d}~{ey}/{em}/{ed}',
+        r'(\d{4})/(\d{1,2})/(\d{1,2})~(\d{4})/(\d{1,2})/(\d{1,2})', now)
+    return ordinary_observation('esun_unicard', '玉山 Unicard', '玉山銀行', source, rate, expiry,
+        ['需電子帳單及臺幣帳戶成功自扣', '指定方案、特店與支付類別加碼需另行核對', '一般消費排除項目與交易認列待確認'],
+        ['linePay', 'jkoPay', 'pxPlus'])
+
+
+def fubon_costco(source, now):
+    text = re.sub(r'\s+', '', source['text'])
+    rate, y, m, d = one(r'店外一般消費([0-9]+(?:\.[0-9]+)?)%好多金回饋無上限活動日期：即日起~(\d{4})/(\d{1,2})/(\d{1,2})活動內容', text)
+    repeated = consistent(r'於店外一般消費享([0-9]+(?:\.[0-9]+)?)%好多金回饋無上限', text)
+    if rate != repeated or '不予計算好多金' not in text:
+        raise ValueError('Conflicting outside-store rate or missing exclusions')
+    expiry = datetime.combine(datetime(int(y), int(m), int(d)).date(), time.max, TZ)
+    if now > expiry:
+        raise ValueError('Outside-store offer expired')
+    return ordinary_observation('fubon_costco', '富邦 Costco 聯名卡', '富邦銀行', source,
+        float(rate), expiry.isoformat(), ['僅店外一般消費好多金方案', '不含店內、加油、交通及限量登錄加碼',
+        '請款期限、好多金資格及行動支付認列待確認'], ['linePay', 'jkoPay', 'pxPlus'])
+
+
+def sport(source, now):
+    text = re.sub(r'\s+', '', source['text'])
+    add, qualified, base = one(r'國內外一般消費基本回饋電子化帳單加碼([0-9]+(?:\.[0-9]+)?)%，須於當月帳單結帳日前，完成設定電子或行動帳單，方可符合最高([0-9]+(?:\.[0-9]+)?)%回饋資格，否則僅享([0-9]+(?:\.[0-9]+)?)%回饋', text)
+    if abs(float(base) + float(add) - float(qualified)) > 1e-9 or '大咖DACARD' not in text:
+        raise ValueError('Inconsistent electronic-statement base rate')
+    y, m, d, em, ed = one(r'一[.．、]活動期間：(\d{4})/(\d{1,2})/(\d{1,2})-(\d{1,2})/(\d{1,2})二[.．、]活動內容', text)
+    expiry = validity(f'{y}/{m}/{d}~{y}/{em}/{ed}',
+        r'(\d{4})/(\d{1,2})/(\d{1,2})~(\d{4})/(\d{1,2})/(\d{1,2})', now)
+    return ordinary_observation('sinopac_sport', '永豐 SPORT 卡', '永豐銀行', source,
+        float(qualified), expiry, ['需於結帳前設定電子或行動帳單',
+        '運動獎勵、指定支付、達標及新戶加碼未納入', '大咖 DACARD 與其他門檻仍須另核對'], ['linePay', 'jkoPay'])
+
+
 ADAPTERS = {'ctbc_linepay': ctbc, 'ctbc_linepay_debit': ctbc_debit,
-            'esun_ubear': ubear, 'fubon_j': fubon_j}
+            'esun_ubear': ubear, 'fubon_j': fubon_j,
+            'federal_jihe': federal_jihe, 'esun_unicard': unicard,
+            'fubon_costco': fubon_costco, 'sinopac_sport': sport}
 
 
 def observe(evidence, now):
