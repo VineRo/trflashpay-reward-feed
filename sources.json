@@ -9,7 +9,7 @@
   },
   {
     "cardId": "fubon_j",
-    "url": "https://www.fubon.com/banking/JF/"
+    "url": "https://www.fubon.com/banking/personal/credit_card/all_card/omiyage/omiyage.htm"
   },
   {
     "cardId": "cathay_cube",
@@ -18,5 +18,9 @@
   {
     "cardId": "taishin_gogo",
     "url": "https://www.taishinbank.com.tw/TSB/personal/credit/intro/overview/cg021/card001/"
+  },
+  {
+    "cardId": "ctbc_linepay_debit",
+    "url": "https://www.ctbcbank.com/content/dam/minisite/long/creditcard/LINEPay/notice.html"
   }
 ]

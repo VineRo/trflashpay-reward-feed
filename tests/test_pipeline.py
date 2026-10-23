@@ -74,6 +74,16 @@ class PipelineTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             compile_rules(self.approved * 2, self.evidence, self.now)
 
+    def test_shared_official_url_is_downloaded_once_per_snapshot(self):
+        calls = []
+        def download(url):
+            calls.append(url)
+            return 'one consistent announcement'
+        result = collect([{'cardId': 'credit', 'url': 'https://bank.example/terms'},
+                          {'cardId': 'debit', 'url': 'https://bank.example/terms'}], download)
+        self.assertEqual(len(calls), 1)
+        self.assertEqual(result['credit']['sha256'], result['debit']['sha256'])
+
     def test_collect_failure_is_explicit(self):
         def fail(url):
             raise TimeoutError('timeout')

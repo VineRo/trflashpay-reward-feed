@@ -17,8 +17,15 @@ def one(pattern, text):
     return matches[0]
 
 
-def validity(text, pattern, now):
-    parts = one(pattern, text)
+def consistent(pattern, text):
+    matches = re.findall(pattern, text)
+    if not matches or len(set(matches)) != 1:
+        raise ValueError('Missing or conflicting repeated terms')
+    return matches[0]
+
+
+def validity(text, pattern, now, consistent_duplicates=False):
+    parts = consistent(pattern, text) if consistent_duplicates else one(pattern, text)
     y, m, d, ey, em, ed = map(int, parts)
     start = datetime(y, m, d, tzinfo=TZ)
     end = datetime.combine(datetime(ey, em, ed).date(), time.max, TZ)
@@ -77,7 +84,41 @@ def ubear(source, now):
     return rule
 
 
-ADAPTERS = {'ctbc_linepay': ctbc, 'esun_ubear': ubear}
+def ctbc_debit(source, now):
+    rule = ctbc(source, now)
+    credit, debit = one(
+        r'國內外一般消費\s+國內外一般刷卡交易，不含本行\s*不回饋交易項目\s*。\s*([0-9]+(?:\.[0-9]+)?)%\s+([0-9]+(?:\.[0-9]+)?)%', source['text'])
+    expiry = validity(source['text'],
+        r'LINE Pay簽帳金融卡自(\d{4})/(\d{1,2})/(\d{1,2})~(\d{4})/(\d{1,2})/(\d{1,2})', now)
+    rule.update(cardId='ctbc_linepay_debit', cardName='中國信託 LINE Pay 簽帳金融卡',
+                cardType='debitCard', promoRewardRate=float(debit), validUntil=expiry,
+                promoDescription=f'簽帳金融卡一般消費公告 {float(debit):g}%；交易資格待確認',
+                badgeText=f'簽帳一般消費公告 {float(debit):g}%')
+    return rule
+
+
+def fubon_j(source, now):
+    text = re.sub(r'\s+', '', source['text'])
+    rate = float(consistent(r'國內及其他海外地區一般消費享最高([0-9]+(?:\.[0-9]+)?)%', text))
+    fallback = float(consistent(r'尚未生效或無持續符合條件，則享([0-9]+(?:\.[0-9]+)?)%回饋', text))
+    if not 0 <= fallback <= rate:
+        raise ValueError('Conflicting qualified and unqualified rates')
+    expiry = validity(text,
+        r'基本回饋優惠期間自(\d{4})/(\d{1,2})/(\d{1,2})至(\d{4})/(\d{1,2})/(\d{1,2})止',
+        now, consistent_duplicates=True)
+    if any(term not in text for term in ['JCash', 'JPoints', '所有消費回饋皆須綁定LINEPay後生效',
+                                          '電子帳單', '自動扣繳', '無條件捨去至整數']):
+        raise ValueError('Missing card variant, qualification or rounding terms')
+    rule = template('fubon_j', '台北富邦 J 卡（回饋版本待確認）', '富邦銀行', source, rate, expiry,
+        ['需確認 J Cash／J Points 卡別', '限國內一般消費，非日韓泰旅遊加碼',
+         '自動扣繳／電子帳單設定及生效時點待確認', f'未達公告條件時標示 {fallback:g}%，仍需認列一般消費',
+         'J Points 須有效綁定臺灣 LINE Pay', '取整方式為無條件捨去至整數，請款期限另核對'])
+    rule['promoDescription'] = f'國內一般消費公告最高 {rate:g}%；不是旅遊或限量活動加碼，適用資格待確認'
+    return rule
+
+
+ADAPTERS = {'ctbc_linepay': ctbc, 'ctbc_linepay_debit': ctbc_debit,
+            'esun_ubear': ubear, 'fubon_j': fubon_j}
 
 
 def observe(evidence, now):

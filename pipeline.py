@@ -82,17 +82,21 @@ def write_json(path, value):
 
 
 def collect(sources, downloader=fetch):
-    result = {}
+    result, documents = {}, {}
     for source in sources:
         cid = source['cardId']
         if cid in result:
             raise ValueError('Duplicate source card ID')
-        try:
-            text = downloader(source['url'])
-            result[cid] = {'url': source['url'], 'text': text,
-                           'sha256': hashlib.sha256(text.encode()).hexdigest()}
-        except Exception as error:
-            result[cid] = {'url': source['url'], 'error': str(error)}
+        url = source['url']
+        if url not in documents:
+            try:
+                text = downloader(url)
+                documents[url] = {'url': url, 'text': text,
+                                  'sha256': hashlib.sha256(text.encode()).hexdigest()}
+            except Exception as error:
+                documents[url] = {'url': url, 'error': str(error)}
+        # Cards sharing a terms page use one consistent source snapshot.
+        result[cid] = dict(documents[url])
     return result
 
 

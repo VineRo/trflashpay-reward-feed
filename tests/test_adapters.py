@@ -54,3 +54,44 @@ class AdapterTests(unittest.TestCase):
         self.assertEqual(rules, [])
         self.assertIn('ctbc_linepay', errors)
         self.assertIn('esun_ubear', errors)
+
+class ExtendedAdapterTests(unittest.TestCase):
+    now = datetime(2026, 10, 23, tzinfo=timezone.utc)
+
+    def fubon_source(self, rate='1', fallback='0.5'):
+        return {'url': 'https://www.fubon.com/terms', 'text':
+            '基本回饋 優惠期間自 2026/4/1 至 2026/12/31 止 '
+            f'國內及其他海外地區一般消費享最高{rate}% '
+            f'尚未生效或無持續符合條件，則享{fallback}%回饋 '
+            'J Cash J Points 所有消費回饋皆須綁定LINE Pay後生效 '
+            '電子帳單 自動扣繳 無條件捨去至整數 日本最高6%'}
+
+    def test_fubon_does_not_select_travel_marketing_maximum(self):
+        from adapters import fubon_j
+        rule = fubon_j(self.fubon_source(), self.now)
+        self.assertEqual(rule['promoRewardRate'], 1)
+        self.assertTrue(rule['verificationRequiredReason'])
+        self.assertEqual(rule['defaultRewardRate'], 0)
+
+    def test_fubon_accepts_identical_desktop_mobile_sections(self):
+        from adapters import fubon_j
+        source = self.fubon_source()
+        source['text'] *= 2
+        self.assertEqual(fubon_j(source, self.now)['promoRewardRate'], 1)
+
+    def test_fubon_rejects_conflicting_sections_and_fallback(self):
+        from adapters import fubon_j
+        for source in [self.fubon_source(fallback='9'),
+                       {'url': 'https://www.fubon.com/terms', 'text': self.fubon_source()['text'] + self.fubon_source(rate='2')['text']}]:
+            with self.assertRaises(ValueError):
+                fubon_j(source, self.now)
+
+    def test_debit_uses_debit_table_and_own_validity(self):
+        from adapters import ctbc_debit
+        source = AdapterTests().ctbc_source()
+        source['text'] += ' LINE Pay簽帳金融卡自2026/7/1~2026/11/30'
+        rule = ctbc_debit(source, self.now)
+        self.assertEqual(rule['cardType'], 'debitCard')
+        self.assertEqual(rule['cardId'], 'ctbc_linepay_debit')
+        self.assertIn('2026-11-30', rule['validUntil'])
+        self.assertTrue(rule['verificationRequiredReason'])
