@@ -187,3 +187,38 @@ class TaiwanGeneralOfferTests(unittest.TestCase):
         for cid, term in [('federal_jihe', '需以新台幣請款'), ('esun_unicard', '成功扣繳卡費'), ('fubon_costco', '不予計算好多金'), ('sinopac_sport', '大咖DACARD')]:
             with self.subTest(card=cid), self.assertRaises(ValueError):
                 ADAPTERS[cid](self.source(self.fixtures()[cid].replace(term, '')), self.now)
+
+class TaishinRemainingTests(unittest.TestCase):
+    now = AdapterTests.now
+    def test_richart_migration_and_conflicts(self):
+        from adapters import taishin_richart
+        text = '台新Richart卡 @GoGo卡 活動期間：2026/7/1–2027/12/31之消費適用 一般消費享0.3%台新Point(信用卡) 小數點後無條件捨去 不回饋交易 指定通路最高10%'
+        source = lambda t: {'url': 'https://www.taishinbank.com.tw/terms', 'text': t}
+        self.assertEqual(taishin_richart(source(text), self.now)['promoRewardRate'], .3)
+        for bad in [text.replace('@GoGo卡',''), text+'一般消費享2%台新Point(信用卡)', text+'活動期間：2026/7/1–2027/3/31之消費適用']:
+            with self.assertRaises(ValueError): taishin_richart(source(bad), self.now)
+    def test_debit_scope_and_expiry(self):
+        from adapters import richart_debit
+        text = '2026/07/01-2026/12/31RichartMastercard簽帳金融卡一般消費享0.5%無上限 不回饋消費項目 晶片金融卡消費扣款功能並非刷卡消費 入帳日 每月結算後 青年最高5%'
+        source = lambda t: {'url': 'https://richart.tw/terms', 'text': t}
+        rule = richart_debit(source(text), self.now)
+        self.assertEqual(rule['promoRewardRate'], .5)
+        self.assertEqual(rule['cardType'], 'debitCard')
+        with self.assertRaises(ValueError): richart_debit(source(text.replace('Mastercard','Visa')), self.now)
+        with self.assertRaises(ValueError): richart_debit(source(text), datetime(2027,1,1,tzinfo=timezone.utc))
+    def jko_section(self, year=2026, rate='1', reference='1'):
+        return (f'活動期間：{year}/1/1~{year}/12/31適用卡別：街口聯名卡 【一般消費享{rate}%街口幣無上限】 '
+                f'一般消費：依每筆消費金額逐筆以{reference}%計算回饋 活動期間：交易日{year}/1/1~{year}/12/31之消費適用本活動辦法 '
+                '交易當下和回饋當下 四捨五入至個位數 街口APP繳費交易不適用 精選3.5%')
+    def test_jko_current_campaign_not_archived_campaign(self):
+        from adapters import jko_card
+        current, old = self.jko_section(), self.jko_section(2025,'8','8')
+        source = lambda t: {'url': 'https://www.taishinbank.com.tw/terms', 'text': t}
+        self.assertEqual(jko_card(source(current+old), self.now)['promoRewardRate'], 1)
+        for text in [old,current+current,self.jko_section(reference='2')]:
+            with self.assertRaises(ValueError): jko_card(source(text), self.now)
+    def test_exhausted_and_unreadable_sources_are_pending(self):
+        from pending_status import pending_reason
+        self.assertIn('已額滿',pending_reason('easywallet_account',{'text':'(已額滿)日常採買悠遊付滿額最高10%回饋'}))
+        self.assertIn('無法完整讀取',pending_reason('cathay_cube',{'error':'unreadable'}))
+        self.assertIn('不能套用',pending_reason('taiwanpay_bonus',{}))

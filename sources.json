@@ -13,11 +13,11 @@
   },
   {
     "cardId": "cathay_cube",
-    "url": "https://www.cathaybk.com.tw/cathaybk/promo/event/credit-card/product/CUBE_rights/index.html?Type=11&open=true"
+    "url": "https://www.cathay-cube.com.tw/cathaybk/personal/product/credit-card/cards/cube?trk=public_post-text"
   },
   {
     "cardId": "taishin_gogo",
-    "url": "https://www.taishinbank.com.tw/TSB/personal/credit/intro/overview/cg021/card001/"
+    "url": "https://web.taishinbank.com.tw/TSB/personal/credit/intro/overview/future/ab46dfa7-5d88-11f1-b50f-0050568c09e3"
   },
   {
     "cardId": "ctbc_linepay_debit",
@@ -38,5 +38,45 @@
   {
     "cardId": "sinopac_sport",
     "url": "https://bank.sinopac.com/sinopacBT/personal/credit-card/introduction/bankcard/sportcard.html?previousPage=other+articles&source=2"
+  },
+  {
+    "cardId": "jkopay_card",
+    "url": "https://www.taishinbank.com.tw/TSB/personal/credit/intro/overview/cg038/card001/index.html"
+  },
+  {
+    "cardId": "cathay_debit",
+    "url": "https://www.cathay-cube.com.tw/cathaybk/personal/product/credit-card/cards/i-debit"
+  },
+  {
+    "cardId": "jko_richart_account",
+    "url": "https://mkt.jkopay.com/zh-TW/event/jkopayrichart202310"
+  },
+  {
+    "cardId": "pluspay_account",
+    "url": "https://event2023.pluspay.com.tw/2026Q4-EC"
+  },
+  {
+    "cardId": "easywallet_account",
+    "url": "https://www.easycard.com.tw/offer?cls=1506473503%2C1506473490%2C&id=1787727024"
+  },
+  {
+    "cardId": "ipass_money_account",
+    "url": "https://web.i-pass.com.tw/Preferential?page=1&type=0"
+  },
+  {
+    "cardId": "pxplus_account",
+    "url": "https://prod-s3.pxpayplus.com/pxplus_jpmam_mktpage2026/index.html"
+  },
+  {
+    "cardId": "taishin_richart_debit",
+    "url": "https://richart.tw/TSDIB_RichartWeb/discount/discount-details?discount=277"
+  },
+  {
+    "cardId": "taiwanpay_bonus",
+    "url": "https://www.taiwanpay.com.tw/fisc-tpay/news/event"
+  },
+  {
+    "cardId": "chb_my_happy",
+    "url": "https://www.bankchb.com/frontend/mashup.jsp?funcId=cdf27f7215"
   }
 ]

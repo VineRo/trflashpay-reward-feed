@@ -199,8 +199,71 @@ def sport(source, now):
         '運動獎勵、指定支付、達標及新戶加碼未納入', '大咖 DACARD 與其他門檻仍須另核對'], ['linePay', 'jkoPay'])
 
 
+def taishin_richart(source, now):
+    text = re.sub(r'\s+', '', source['text'])
+    # The legacy @GoGo ID now follows the issuer's explicitly named migration.
+    if '@GoGo卡' not in text or '台新Richart卡' not in text:
+        raise ValueError('Missing legacy card migration scope')
+    rate = float(consistent(r'一般消費享([0-9]+(?:\.[0-9]+)?)%台新P(?:oint|iont)\(信用卡\)', text))
+    expiry = validity(text,
+        r'活動期間：(\d{4})/(\d{1,2})/(\d{1,2})[–~－-](\d{4})/(\d{1,2})/(\d{1,2})之消費適用', now, consistent_duplicates=True)
+    if '小數點後無條件捨去' not in text or '不回饋交易' not in text:
+        raise ValueError('Missing rounding or exclusions')
+    return ordinary_observation('taishin_gogo', '台新 Richart 卡（原 @GoGo）', '台新銀行', source, rate, expiry,
+        ['原 @GoGo 已納入 Richart 權益', '僅一般消費基本台新 Point，不含切換方案', '依逐筆無條件捨去取整，支付認列與排除交易待核對'],
+        ['linePay', 'jkoPay', 'pxPlus', 'plusPay'])
+
+
+def richart_debit(source, now):
+    text = re.sub(r'\s+', '', source['text'])
+    parts = one(r'(\d{4})/(\d{1,2})/(\d{1,2})-(\d{4})/(\d{1,2})/(\d{1,2})RichartMastercard簽帳金融卡一般消費享([0-9]+(?:\.[0-9]+)?)%無上限', text)
+    y, m, d, ey, em, ed = parts[:6]
+    expiry = validity(f'{y}/{m}/{d}~{ey}/{em}/{ed}',
+        r'(\d{4})/(\d{1,2})/(\d{1,2})~(\d{4})/(\d{1,2})/(\d{1,2})', now)
+    if any(term not in text for term in ['不回饋消費項目', '晶片金融卡消費扣款功能並非刷卡消費', '入帳日', '每月結算後']):
+        raise ValueError('Missing debit-specific transaction or settlement scope')
+    rule = ordinary_observation('taishin_richart_debit', '台新 Richart Mastercard 簽帳金融卡', '台新銀行', source,
+        float(parts[6]), expiry, ['限 Mastercard 簽帳購物，不是晶片金融卡扣款', '每卡依入帳日按月結算',
+        '超商、全聯及其他除外消費不適用', '青年、新戶與 LINE Pay 加碼未納入'], ['linePay'])
+    rule['cardType'] = 'debitCard'
+    return rule
+
+
+def jko_card(source, now):
+    text = re.sub(r'\s+', '', source['text'])
+    # Current and archived campaigns coexist in this page. Scope each card
+    # campaign before reading rates; bill-payment campaigns are separate.
+    period = r'活動期間：(\d{4})/(\d{1,2})/(\d{1,2})~(\d{4})/(\d{1,2})/(\d{1,2})適用卡別：街口聯名卡'
+    starts = list(re.finditer(period, text))
+    active = []
+    for i, match in enumerate(starts):
+        section = text[match.start():starts[i + 1].start() if i + 1 < len(starts) else len(text)]
+        if '【一般消費享' not in section:
+            continue
+        try:
+            validity(section, period, now)
+        except ValueError:
+            continue
+        active.append(section)
+    if len(active) != 1:
+        raise ValueError('Missing or ambiguous active general-spend campaign')
+    text = active[0]
+    rate = float(one(r'【一般消費享([0-9]+(?:\.[0-9]+)?)%街口幣無上限】', text))
+    references = re.findall(r'一般消費：依每筆消費金額逐筆以([0-9]+(?:\.[0-9]+)?)%計算回饋', text)
+    if not references or any(float(value) != rate for value in references):
+        raise ValueError('Missing or conflicting general-spend calculation')
+    expiry = validity(text,
+        r'活動期間：交易日(\d{4})/(\d{1,2})/(\d{1,2})~(\d{4})/(\d{1,2})/(\d{1,2})之消費適用本活動辦法', now)
+    if any(term not in text for term in ['交易當下和回饋當下', '四捨五入至個位數', '街口APP繳費交易不適用']):
+        raise ValueError('Missing binding, rounding or bill-payment scope')
+    return ordinary_observation('jkopay_card', '台新街口聯名卡', '台新銀行', source, rate, expiry,
+        ['交易及回饋當下均須有效綁定街口卡', '超商與 Apple 媒體服務限街口綁定消費',
+        '不含街口 APP 繳費、精選通路及新戶加碼', '一般消費逐筆四捨五入至整數街口幣'], ['jkoPay', 'linePay'])
+
+
 ADAPTERS = {'ctbc_linepay': ctbc, 'ctbc_linepay_debit': ctbc_debit,
             'esun_ubear': ubear, 'fubon_j': fubon_j,
+            'taishin_gogo': taishin_richart, 'taishin_richart_debit': richart_debit, 'jkopay_card': jko_card,
             'federal_jihe': federal_jihe, 'esun_unicard': unicard,
             'fubon_costco': fubon_costco, 'sinopac_sport': sport}
 

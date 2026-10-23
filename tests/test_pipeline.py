@@ -96,3 +96,18 @@ class PipelineTests(unittest.TestCase):
         self.rule['merchantRates'] = [{'ruleId': 'a', 'ratePercentage': 2, 'merchantKeywords': ['Test'], 'capAmount': 100}]
         with self.assertRaises(ValueError):
             validate(self.rule)
+
+class CatalogSourceTests(unittest.TestCase):
+    def test_every_catalog_source_has_one_https_official_registration(self):
+        from pathlib import Path
+        import json
+        from urllib.parse import urlparse
+        root = Path(__file__).resolve().parents[1]
+        sources = json.loads((root / 'sources.json').read_text())
+        catalog = json.loads((root / 'catalog.json').read_text())
+        self.assertCountEqual([s['cardId'] for s in sources], catalog)
+        self.assertEqual(len(sources), len({s['cardId'] for s in sources}))
+        for source in sources:
+            parsed = urlparse(source['url'])
+            self.assertEqual(parsed.scheme, 'https')
+            self.assertFalse(parsed.username or parsed.password)

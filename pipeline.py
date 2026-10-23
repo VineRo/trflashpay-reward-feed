@@ -154,7 +154,8 @@ def build_feed(approved, evidence, coverage, now=None):
     verified = {rule['cardId'] for rule in rules}
     for cid in coverage:
         if cid not in verified:
-            pending.setdefault(cid, 'Issuer terms have not been reviewed')
+            from pending_status import pending_reason
+            pending.setdefault(cid, pending_reason(cid, evidence.get(cid, {})))
     return {
         'schemaVersion': 1,
         'revision': int(now.timestamp() * 1000000),
@@ -184,6 +185,8 @@ def main():
             'confirmedRuleCount': sum(not r.get('verificationRequiredReason') for r in feed['rules']),
             'eligibilityPending': [r['cardId'] for r in feed['rules'] if r.get('verificationRequiredReason')],
             'coverageCount': len(feed['coverage']), 'pending': feed['pending'],
+            'sourceCount': len(evidence),
+            'readableSourceCount': sum(bool(value.get('text')) for value in evidence.values()),
             'sources': {cid: {'url': value['url'], 'sha256': value.get('sha256'),
                                'error': value.get('error')}
                         for cid, value in evidence.items()},
