@@ -135,6 +135,18 @@ def build_feed(approved, evidence, coverage, now=None):
             rules.extend(compile_rules([entry], evidence, now))
         except (ValueError, KeyError, TypeError) as error:
             pending[cid] = str(error)
+    from adapters import observe
+    observations, observation_errors = observe(evidence, now)
+    accepted = {rule['cardId'] for rule in rules}
+    for observation in observations:
+        if observation['cardId'] not in coverage:
+            raise ValueError('Adapter card missing from managed catalog')
+        if observation['cardId'] not in accepted:
+            rules.append(observation)
+            pending.pop(observation['cardId'], None)
+    for cid, message in observation_errors.items():
+        if cid in coverage and cid not in accepted:
+            pending[cid] = message
     verified = {rule['cardId'] for rule in rules}
     for cid in coverage:
         if cid not in verified:
@@ -165,6 +177,8 @@ def main():
         write_json(root / 'public' / 'status.json', {
             'generatedAt': feed['generatedAt'], 'expiresAt': feed['expiresAt'],
             'publishedRuleCount': len(feed['rules']),
+            'confirmedRuleCount': sum(not r.get('verificationRequiredReason') for r in feed['rules']),
+            'eligibilityPending': [r['cardId'] for r in feed['rules'] if r.get('verificationRequiredReason')],
             'coverageCount': len(feed['coverage']), 'pending': feed['pending'],
             'sources': {cid: {'url': value['url'], 'sha256': value.get('sha256'),
                                'error': value.get('error')}
