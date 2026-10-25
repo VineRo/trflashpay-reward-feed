@@ -21,6 +21,8 @@ jobs:
         with:
           python-version: '3.12'
       - run: python -m unittest discover -s tests -v
+      - name: Record the preinstalled Chrome used to render dynamic official pages
+        run: google-chrome --version
       - name: Verify current official evidence and approved rules
         run: python pipeline.py --publish
       - name: Save evidence even when bank pages change

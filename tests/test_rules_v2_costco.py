@@ -6,7 +6,7 @@ import unittest
 from assessment_profiles import APPROVALS, SUPPORT_APPROVALS
 from pipeline import build_feed, normalize
 from rules_v2 import load_catalog, validate_catalog, check_sources
-from test_rules_v2_cube import FEED, ROOT, NOW, registry, reviewed_evidence
+from test_rules_v2_cube import FEED, ROOT, NOW, registry, reviewed_evidence, platform_registry, reviewed_platform_evidence
 from project_evidence import requires_project_evidence
 
 
@@ -19,7 +19,7 @@ class CostcoProgramTests(unittest.TestCase):
     @requires_project_evidence
     def test_valid_catalog_and_both_approved_text_sources(self):
         validate_catalog(self.catalog)
-        check_sources(self.catalog, registry())
+        check_sources(self.catalog, registry() + platform_registry())
         saved = ROOT / 'audit/reward_schema_v2_20261024'
         self.assertEqual({e['format'] for e in self.program['evidence']}, {'html', 'pdf'})
         for e in self.program['evidence']:
@@ -100,7 +100,7 @@ class CostcoProgramTests(unittest.TestCase):
     @requires_project_evidence
     def test_current_fixture_equals_actual_backend_and_v1_profiles_unchanged(self):
         evidence=reviewed_evidence()
-        feed=build_feed([],evidence,['cathay_cube','fubon_costco'],NOW,programs=self.catalog)
+        feed=build_feed([],evidence,['cathay_cube','fubon_costco'],NOW,programs=self.catalog,platform_evidence=reviewed_platform_evidence())
         self.assertEqual(feed['programPending'],{})
         legacy=build_feed([],copy.deepcopy(evidence),['cathay_cube','fubon_costco'],NOW)
         self.assertEqual({k:v for k,v in feed.items() if k in legacy},legacy)
@@ -109,7 +109,7 @@ class CostcoProgramTests(unittest.TestCase):
 
     def test_either_source_missing_changed_failed_or_stale_withdraws_all_costco_only(self):
         valid=reviewed_evidence()
-        baseline=build_feed([],valid,['cathay_cube','fubon_costco'],NOW,programs=self.catalog)
+        baseline=build_feed([],valid,['cathay_cube','fubon_costco'],NOW,programs=self.catalog,platform_evidence=reviewed_platform_evidence())
         cube=next(p for p in baseline['programs'] if p['id']=='cathay_cube_credit')
         priced={r['id'] for r in self.program['rules'] if r.get('status')!='uncovered'}
         pdf=next(e['url'] for e in self.program['evidence'] if e['format']=='pdf')
@@ -123,7 +123,7 @@ class CostcoProgramTests(unittest.TestCase):
                     elif failure=='changed': parent[key]['sha256']='0'*64
                     elif failure=='failed': parent[key]={'error':'timeout'}
                     else: parent[key]['error']='stale cached source'
-                    feed=build_feed([],evidence,['cathay_cube','fubon_costco'],NOW,programs=self.catalog)
+                    feed=build_feed([],evidence,['cathay_cube','fubon_costco'],NOW,programs=self.catalog,platform_evidence=reviewed_platform_evidence())
                     p=next(p for p in feed['programs'] if p['id']=='fubon_costco_credit')
                     self.assertFalse(priced & {r['id'] for r in p['rules']})
                     self.assertEqual({f'fubon_costco_credit/{rid}' for rid in priced}, {k for k in feed['programPending'] if k.startswith('fubon_costco_credit/')})

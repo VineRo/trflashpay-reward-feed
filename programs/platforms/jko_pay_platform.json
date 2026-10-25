@@ -1,0 +1,22 @@
+{
+  "id": "jko_pay_platform",
+  "issuer": "jkopay",
+  "name": "街口支付",
+  "rewardUnit": "jko_coins",
+  "selectors": [],
+  "exclusions": [],
+  "evidence": [],
+  "notCovering": [
+    "通路頁面引用街口條款「街口帳戶付款，銀牌以上最高 1% 街口幣」，街口官方活動頁為動態頁（電商活動），本批未保存其官方渲染內容，亦未核對是否適用實體掃碼與會員等級條件；平台層暫未建模。"
+  ],
+  "rules": [
+    {
+      "id": "jkopay.base",
+      "layer": "L2",
+      "kind": "base",
+      "group": "jkopay.main",
+      "status": "uncovered",
+      "notes": "通路頁面引用街口條款「街口帳戶付款，銀牌以上最高 1% 街口幣」，街口官方活動頁為動態頁（電商活動），本批未保存其官方渲染內容，亦未核對是否適用實體掃碼與會員等級條件；平台層暫未建模。"
+    }
+  ]
+}

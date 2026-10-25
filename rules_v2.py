@@ -5,6 +5,7 @@ each priced rule and exclusion cites reviewed official evidence, and a rule is
 published only while every source it relies on still matches its approval.
 """
 import fnmatch
+import hashlib
 import json
 import re
 from datetime import datetime
@@ -24,7 +25,9 @@ LAYERS = {'L1', 'L2', 'L3'}
 RULE_KINDS = {'base', 'bonus'}
 ROUNDING_MODES = {'halfUp', 'floor', 'ceil'}
 ROUNDING_BASES = {'perTransaction', 'monthlyAggregate', 'perCampaign'}
-SCOPES = {'card', 'primaryAndSupplementary', 'household'}
+SCOPES = {'card', 'primaryAndSupplementary', 'household', 'account'}
+# QR code standards a scan can establish (V2-S6: TWQR stands).
+QR_STANDARDS = {'twqr'}
 PERIODS = {'calendarMonth', 'billingCycle', 'campaign', 'day'}
 SELECTOR_KINDS = {'plan', 'tier', 'flag', 'variant'}
 SELECTOR_SOURCES = {'userDeclared', 'issuerRecord'}
@@ -251,6 +254,10 @@ def _validate_condition(node, ctx, where, depth=0):
         expected_values = expected if isinstance(expected, list) else [expected]
         if not expected_values or not all(_selector_value_ok(selector, v) for v in expected_values):
             _fail(where, f'value not allowed for selector {sid}')
+    elif key == 'qrStandard':
+        values = value if isinstance(value, list) else [value]
+        if not values or not all(isinstance(v, str) and v in QR_STANDARDS for v in values):
+            _fail(where, 'invalid qrStandard')
     elif key == 'issuerDecision':
         _text(value, where, 300)
     else:
@@ -396,7 +403,8 @@ def _validate_exclusion(item, ctx):
 
 def _validate_evidence(item):
     where = f"evidence {item.get('id') if isinstance(item, dict) else '?'}"
-    _keys(item, where, {'id', 'sourceCard', 'url', 'role', 'format', 'approvedSha256', 'anchors', 'approval'})
+    _keys(item, where, {'id', 'sourceCard', 'url', 'role', 'format', 'approvedSha256', 'anchors', 'approval'},
+          {'section'})
     _ident(item['id'], where)
     _ident(item['sourceCard'], where)
     if not isinstance(item['url'], str) or not item['url'].startswith('https://') or len(item['url']) > 500:
@@ -415,6 +423,15 @@ def _validate_evidence(item):
         if not isinstance(anchor['pointer'], str) or not anchor['pointer'].startswith('/'):
             _fail(where, 'anchor pointer must be absolute')
         _text(anchor['contains'], where, 200)
+    if 'section' in item:
+        # The approval covers only the terms between these markers (V2-S6).
+        if item['format'] != 'html' or item['role'] != 'primary':
+            _fail(where, 'section is only allowed on primary HTML evidence')
+        _keys(item['section'], f'{where} section', {'start', 'end'})
+        for marker in ('start', 'end'):
+            _text(item['section'][marker], where, 200)
+        if item['section']['start'] == item['section']['end']:
+            _fail(where, 'section markers must differ')
     _keys(item['approval'], where, {'by', 'at'}, {'note'})
     _text(item['approval']['by'], where, 120)
     _datetime(item['approval']['at'], where)
@@ -471,7 +488,9 @@ def _validate_program(program, units, merchant_sets):
     for key in ('variants', 'notCovering'):
         for value in _list(program[key], where, maximum=20) if key in program else []:
             _text(value, where, 300)
-    for key, check, minimum in (('selectors', _validate_selector, 0), ('evidence', _validate_evidence, 1)):
+    # A program of uncovered notes only makes no reward claim and needs no evidence.
+    claims = any(isinstance(r, dict) and r.get('status') != 'uncovered' for r in program['rules']) or bool(program['exclusions'])
+    for key, check, minimum in (('selectors', _validate_selector, 0), ('evidence', _validate_evidence, 1 if claims else 0)):
         for item in _list(program[key], f'{where} {key}', minimum=minimum, maximum=50):
             check(item)
         _unique(program[key], f'{where} {key}')
@@ -528,10 +547,22 @@ def check_sources(catalog, registry):
 
 def load_catalog(directory):
     directory = Path(directory)
-    programs = [json.loads(path.read_text()) for path in sorted((directory / 'cards').glob('*.json'))]
+    programs = [json.loads(path.read_text())
+                for sub in ('cards', 'platforms') for path in sorted((directory / sub).glob('*.json'))]
     return {'rewardUnits': json.loads((directory / 'units.json').read_text()),
             'merchantSets': json.loads((directory / 'merchant_sets.json').read_text()),
             'programs': programs}
+
+
+def section_text(text, start, end):
+    """The approved terms: from the unique start marker through the next end marker."""
+    if not isinstance(text, str) or text.count(start) != 1:
+        raise ValueError('section start marker missing or repeated')
+    begin = text.index(start)
+    stop = text.find(end, begin)
+    if stop < 0 or text.count(end) != 1:
+        raise ValueError('section end marker missing or repeated')
+    return text[begin:stop + len(end)]
 
 
 def _evidence_problem(item, evidence):
@@ -546,6 +577,16 @@ def _evidence_problem(item, evidence):
             return None, 'supporting source not collected'
     if observed.get('error'):
         return observed.get('sha256'), 'source unavailable'
+    if 'section' in item:
+        try:
+            section = section_text(observed.get('text'), item['section']['start'], item['section']['end'])
+        except ValueError as error:
+            return None, f'section boundary: {error}'
+        digest = hashlib.sha256(section.encode()).hexdigest()
+        for name, anchor in item['anchors'].items():
+            if anchor['contains'] not in section:
+                return digest, f'anchor {name} not in approved section'
+        return digest, None if digest == item['approvedSha256'] else 'source changed since approval'
     if observed.get('sha256') != item['approvedSha256']:
         return observed.get('sha256'), 'source changed since approval'
     return observed.get('sha256'), None

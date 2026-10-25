@@ -44,6 +44,20 @@ def reviewed_evidence():
                    proof_downloader=lambda url: supporting_proof(url, docs[url].read_bytes()))
 
 
+def platform_registry():
+    return json.loads((FEED / 'platform_sources.json').read_text())
+
+
+IPASS_SNAPSHOT = ROOT / 'audit/v2-s6_20261025/ipass-rendered.txt'
+
+
+def reviewed_platform_evidence():
+    """Platform sources from the saved Chrome-rendered official text (approved 2026-10-25)."""
+    snapshots = {s['url']: IPASS_SNAPSHOT for s in platform_registry() if s['cardId'] == 'ipass_money_platform'}
+    return collect(platform_registry(), downloader=lambda url: None, proof_downloader=lambda url: {},
+                   renderer=lambda url: snapshots[url].read_text())
+
+
 def cube_program(catalog):
     return next(p for p in catalog['programs'] if p['id'] == 'cathay_cube_credit')
 
@@ -55,7 +69,7 @@ class CubeProgramDataTests(unittest.TestCase):
 
     def test_program_is_valid_and_registered(self):
         validate_catalog(self.catalog)
-        check_sources(self.catalog, registry())
+        check_sources(self.catalog, registry() + platform_registry())
 
     def test_fixed_plan_rules_are_present(self):
         self.assertTrue(FIXED_RULES <= {r['id'] for r in self.program['rules']})
@@ -111,7 +125,8 @@ class CubeEquivalenceTests(unittest.TestCase):
         self.evidence = reviewed_evidence()
 
     def feed(self, evidence):
-        return build_feed([], copy.deepcopy(evidence), ['cathay_cube', 'fubon_costco'], NOW, programs=self.catalog)
+        return build_feed([], copy.deepcopy(evidence), ['cathay_cube', 'fubon_costco'], NOW, programs=self.catalog,
+                          platform_evidence=reviewed_platform_evidence())
 
     def published(self, feed):
         program = cube_program(feed)

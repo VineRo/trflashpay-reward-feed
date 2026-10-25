@@ -1,0 +1,237 @@
+{
+  "id": "ipass_money_platform",
+  "issuer": "ipass",
+  "name": "iPASS MONEY",
+  "rewardUnit": "ipass_green_points",
+  "selectors": [],
+  "notCovering": [
+    "指定店家「付款碼」消費亦適用，但屬反掃，不在本專案範圍。",
+    "連結指定銀行帳戶／信用卡的加碼依各銀行說明，未建模。",
+    "回饋計算以一卡通系統交易完成日認定；額滿依官方公告時間。"
+  ],
+  "rules": [
+    {
+      "id": "ipass.twqr.scan",
+      "layer": "L2",
+      "kind": "bonus",
+      "group": "ipass.main",
+      "period": {
+        "from": "2026-06-01T00:00:00+08:00",
+        "to": "2026-12-31T23:59:59.999999+08:00"
+      },
+      "when": {
+        "all": [
+          {
+            "route": {
+              "platform": [
+                "ipassMoney"
+              ],
+              "funding": [
+                "storedBalance",
+                "creditCard"
+              ]
+            }
+          },
+          {
+            "qrStandard": "twqr"
+          },
+          {
+            "presence": "inPerson"
+          },
+          {
+            "spendType": [
+              "general",
+              "utility",
+              "tax",
+              "government",
+              "fee",
+              "tuition"
+            ]
+          }
+        ]
+      },
+      "rate": {
+        "type": "fixed",
+        "percent": "10"
+      },
+      "includesBase": false,
+      "unit": "ipass_green_points",
+      "rounding": {
+        "mode": "halfUp",
+        "basis": "monthlyAggregate",
+        "scope": "account"
+      },
+      "caps": [
+        {
+          "measure": "reward",
+          "amount": "200",
+          "per": "calendarMonth",
+          "scope": "account",
+          "overflowRule": null
+        }
+      ],
+      "requires": [
+        {
+          "id": "ipass.greenpoints.joined",
+          "label": "已同意加入一卡通綠點回饋（至遲消費當月底）",
+          "per": "calendarMonth",
+          "deadline": "monthLastDay",
+          "source": "userDeclared"
+        },
+        {
+          "id": "ipass.campaign.quotaOpen",
+          "label": "活動總回饋 3,000 萬點尚未額滿",
+          "quota": "limited",
+          "source": "userDeclared"
+        }
+      ],
+      "combinable": {
+        "default": "unknown"
+      },
+      "evidenceRefs": [
+        "ipass.header#period",
+        "ipass.header#scan",
+        "ipass.header#rate",
+        "ipass.header#cap",
+        "ipass.terms#join",
+        "ipass.terms#funding",
+        "ipass.terms#monthly",
+        "ipass.terms#quota",
+        "ipass.terms#value",
+        "ipass.terms#payout"
+      ],
+      "notes": "掃 TWQR 立牌；當月累積消費×10% 四捨五入；每人每月 200 點；只計一般消費，繳費類由排除顯示不列入，保費／儲值／分期等不適用；與綁定卡片回饋是否併計官方未說明，逐層列出不加總。"
+    },
+    {
+      "id": "ipass.paymentCode",
+      "layer": "L2",
+      "kind": "bonus",
+      "group": "ipass.uncovered",
+      "status": "uncovered",
+      "notes": "指定店家「付款碼」消費屬反掃，不在本專案範圍。"
+    }
+  ],
+  "exclusions": [
+    {
+      "id": "ipass.ex.payments",
+      "appliesTo": [
+        "ipass.twqr.scan"
+      ],
+      "when": {
+        "spendType": [
+          "utility",
+          "tax",
+          "government",
+          "fee",
+          "tuition"
+        ]
+      },
+      "effect": "zero",
+      "evidenceRefs": [
+        "ipass.terms#excluded"
+      ]
+    },
+    {
+      "id": "ipass.ex.items",
+      "appliesTo": [
+        "ipass.twqr.scan"
+      ],
+      "when": {
+        "issuerDecision": "是否為停車費、信用卡費等繳費性質之付款，或菸品等法令不可促銷優惠之商品、以數位券／客家幣折抵之金額、服務費或手續費"
+      },
+      "effect": "zero",
+      "evidenceRefs": [
+        "ipass.terms#excluded",
+        "ipass.terms#items"
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "id": "ipass.header",
+      "sourceCard": "ipass_money_platform",
+      "url": "https://www.i-pass.com.tw/Preferential/Detail/GMZTIMYKIEY7I64rUuoF",
+      "role": "primary",
+      "format": "html",
+      "approvedSha256": "a56e279f8af05253fac6e01fb86d6ed8281cf3ac190ef0af2f44a6e4fbbafdd6",
+      "section": {
+        "start": "消費享10%回饋！",
+        "end": "活動總限量3,000萬點"
+      },
+      "anchors": {
+        "period": {
+          "pointer": "/text",
+          "contains": "2026/06/01 | 2026/12/31"
+        },
+        "scan": {
+          "pointer": "/text",
+          "contains": "使用 iPASS MONEY 掃描任一 TWQR 立牌付款"
+        },
+        "rate": {
+          "pointer": "/text",
+          "contains": "享一卡通綠點 10% 回饋"
+        },
+        "cap": {
+          "pointer": "/text",
+          "contains": "每人每月回饋上限200點，活動總限量3,000萬點"
+        }
+      },
+      "approval": {
+        "by": "使用者核准（2026-10-25）",
+        "at": "2026-10-25T23:50:00+08:00",
+        "note": "使用者原話：「核准 iPASS MONEY 兩段指紋（header a56e279f…、terms a38b8b85…）」；段落指紋，渲染方式為預裝 Chrome。"
+      }
+    },
+    {
+      "id": "ipass.terms",
+      "sourceCard": "ipass_money_platform",
+      "url": "https://www.i-pass.com.tw/Preferential/Detail/GMZTIMYKIEY7I64rUuoF",
+      "role": "primary",
+      "format": "html",
+      "approvedSha256": "a38b8b850d03ffdf1052ef7123ebabd1bb061ac2757288efd485d868ad8726ef",
+      "section": {
+        "start": "活動注意事項",
+        "end": "如有未盡事宜請以本活動頁面公告為準。"
+      },
+      "anchors": {
+        "join": {
+          "pointer": "/text",
+          "contains": "須先同意加入一卡通綠點回饋後，方可開始累積及獲得一卡通綠點"
+        },
+        "funding": {
+          "pointer": "/text",
+          "contains": "本活動可使用 iPASS MONEY 帳戶餘額與綁定信用卡進行付款均適用回饋計算"
+        },
+        "monthly": {
+          "pointer": "/text",
+          "contains": "回饋之一卡通綠點以「當月累積消費金額 x10%」計算，小數點後四捨五入"
+        },
+        "quota": {
+          "pointer": "/text",
+          "contains": "本優惠總回饋上限 3,000 萬點"
+        },
+        "excluded": {
+          "pointer": "/text",
+          "contains": "「消費」定義為排除乘車碼或任何繳費類型付款"
+        },
+        "items": {
+          "pointer": "/text",
+          "contains": "菸品等法令不可促銷優惠之商品、使用數位券/客家幣折抵之金額、服務費、手續費等"
+        },
+        "value": {
+          "pointer": "/text",
+          "contains": "一卡通綠點 1 點之價值等同於新台幣 1 元"
+        },
+        "payout": {
+          "pointer": "/text",
+          "contains": "將於完成消費日之次月底前回饋"
+        }
+      },
+      "approval": {
+        "by": "使用者核准（2026-10-25）",
+        "at": "2026-10-25T23:50:00+08:00",
+        "note": "使用者原話：「核准 iPASS MONEY 兩段指紋（header a56e279f…、terms a38b8b85…）」；段落指紋，渲染方式為預裝 Chrome。"
+      }
+    }
+  ]
+}

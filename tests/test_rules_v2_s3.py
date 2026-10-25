@@ -1,7 +1,7 @@
 """Reviewed CUBE S3 data contract; uses saved official documents, never network."""
 import json
 import unittest
-from test_rules_v2_cube import FEED, ROOT, raw_documents, registry, reviewed_evidence, NOW
+from test_rules_v2_cube import FEED, ROOT, raw_documents, registry, reviewed_evidence, NOW, platform_registry, reviewed_platform_evidence
 from rules_v2 import load_catalog, validate_catalog, check_sources, resolve_pointer
 from pipeline import build_feed
 from project_evidence import requires_project_evidence
@@ -47,12 +47,12 @@ class CubeS3Tests(unittest.TestCase):
     @requires_project_evidence
     def test_catalog_anchors_and_sources_and_offline_feed(self):
         validate_catalog(self.catalog)
-        check_sources(self.catalog,registry())
+        check_sources(self.catalog,registry()+platform_registry())
         for e in self.program['evidence']:
             raw = json.loads(raw_documents()[e['url']].read_text())
             for name,a in e['anchors'].items():
                 self.assertIn(a['contains'],resolve_pointer(raw,a['pointer']), (e['id'],name))
-        feed = build_feed([],reviewed_evidence(),['cathay_cube', 'fubon_costco'],NOW,programs=self.catalog)
+        feed = build_feed([],reviewed_evidence(),['cathay_cube', 'fubon_costco'],NOW,programs=self.catalog,platform_evidence=reviewed_platform_evidence())
         self.assertEqual(feed['programPending'],{})
         legacy = build_feed([],reviewed_evidence(),['cathay_cube', 'fubon_costco'],NOW)
         self.assertEqual(feed['assessmentProfiles'], legacy['assessmentProfiles'])

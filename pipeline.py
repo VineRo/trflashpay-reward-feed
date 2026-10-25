@@ -9,12 +9,17 @@ import hashlib
 import json
 import os
 import re
+import shutil
+import subprocess
+import sys
 import tempfile
 import urllib.request
 from datetime import datetime, timezone, timedelta
 from html.parser import HTMLParser
 from pathlib import Path
 from urllib.parse import urlparse
+
+from rules_v2 import section_text  # noqa: F401  (re-exported for the pipeline's callers)
 
 LIMIT = 2 * 1024 * 1024
 CUBE_SCHEME_URL = 'https://www.cathay-cube.com.tw/content/cub-aem-cs/zh-tw/cathaybk/personal/product/credit-card/cards/cube-list.model.json'
@@ -112,6 +117,57 @@ def fetch(url):
         return text
 
 
+CHROME_CANDIDATES = ('google-chrome', 'google-chrome-stable', 'chromium', 'chromium-browser',
+                     '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome')
+RENDER_TIMEOUT = 60
+
+
+def find_chrome():
+    """The preinstalled Chrome (GitHub runners ship one); TRFLASHPAY_CHROME overrides."""
+    for name in (os.environ.get('TRFLASHPAY_CHROME'),) + CHROME_CANDIDATES:
+        if name and (shutil.which(name) or (os.path.isabs(name) and os.access(name, os.X_OK))):
+            return shutil.which(name) or name
+    return None
+
+
+def render_chrome(url, chrome=None, runner=subprocess.run, finder=find_chrome, timeout=RENDER_TIMEOUT):
+    """Render an official page that builds its text with JavaScript (V2-S6).
+
+    Uses the preinstalled Chrome command line only; any failure is raised as a
+    source error so the rules citing it are withdrawn, never guessed.
+    """
+    parsed = urlparse(url)
+    if parsed.scheme != 'https' or not parsed.hostname or parsed.username or parsed.password:
+        raise ValueError('Only HTTPS sources without credentials are allowed')
+    chrome = chrome or finder()
+    if not chrome or runner is None:
+        raise ValueError('Chrome is not available to render this official source')
+    with tempfile.TemporaryDirectory() as profile:
+        cmd = [chrome, '--headless=new', '--disable-gpu', '--no-first-run', '--no-default-browser-check',
+               '--disable-extensions', '--mute-audio', f'--user-data-dir={profile}',
+               '--virtual-time-budget=15000', '--timeout=30000']
+        if sys.platform.startswith('linux'):
+            # Ubuntu 24.04 runners block the unprivileged user-namespace sandbox.
+            cmd.append('--no-sandbox')
+        cmd += ['--dump-dom', url]
+        try:
+            done = runner(cmd, capture_output=True, timeout=timeout, check=False)
+        except subprocess.TimeoutExpired:
+            raise ValueError('Official source render timed out') from None
+    if done.returncode != 0:
+        raise ValueError(f'Official source render failed (exit {done.returncode})')
+    if len(done.stdout) > LIMIT:
+        raise ValueError('Official source exceeds size limit')
+    try:
+        html = done.stdout.decode('utf-8')
+    except UnicodeDecodeError:
+        raise ValueError('Rendered official source is not valid UTF-8') from None
+    text = normalize(html)
+    if len(text) < 200:
+        raise ValueError('Source has too little readable text; cannot verify')
+    return text
+
+
 def fetch_proof(url):
     parsed = urlparse(url)
     if parsed.scheme != 'https' or not parsed.hostname or parsed.username or parsed.password or parsed.fragment:
@@ -152,22 +208,29 @@ def write_json(path, value):
     os.replace(name, path)
 
 
-def collect(sources, downloader=fetch, proof_downloader=fetch_proof):
+def collect(sources, downloader=fetch, proof_downloader=fetch_proof, renderer=None):
     result, documents, proofs = {}, {}, {}
+    renderer = renderer or render_chrome
     for source in sources:
         cid = source['cardId']
         if cid in result:
             raise ValueError('Duplicate source card ID')
         url = source['url']
-        if url not in documents:
+        mode = source.get('render')
+        if mode not in (None, 'chrome'):
+            raise ValueError('Unknown render mode')
+        key = (url, mode)
+        if key not in documents:
             try:
-                text = downloader(url)
-                documents[url] = {'url': url, 'text': text,
+                text = (renderer if mode else downloader)(url)
+                documents[key] = {'url': url, 'text': text,
                                   'sha256': hashlib.sha256(text.encode()).hexdigest()}
+                if mode:
+                    documents[key]['render'] = mode
             except Exception as error:
-                documents[url] = {'url': url, 'error': str(error)}
+                documents[key] = {'url': url, 'error': str(error)}
         # Cards sharing a terms page use one consistent source snapshot.
-        result[cid] = dict(documents[url])
+        result[cid] = dict(documents[key])
         support = source.get('supportingUrls', [])
         if not isinstance(support,list) or len(support)>5 or any(not isinstance(u,str) for u in support) or len(set(support))!=len(support):
             raise ValueError('Invalid supporting source registry')
@@ -207,7 +270,13 @@ def compile_rules(approved, evidence, now=None):
     return rules
 
 
-def build_feed(approved, evidence, coverage, now=None, wallet_evidence=None, programs=None):
+def load_platform_registry(root):
+    """Official payment-app sources for schema v2 platform programs (V2-S6)."""
+    path = Path(root) / 'platform_sources.json'
+    return json.loads(path.read_text()) if path.exists() else []
+
+
+def build_feed(approved, evidence, coverage, now=None, wallet_evidence=None, programs=None, platform_evidence=None):
     now = now or datetime.now(timezone.utc)
     if not isinstance(coverage, list) or not coverage or len(set(coverage)) != len(coverage):
         raise ValueError('Invalid managed catalog')
@@ -249,7 +318,10 @@ def build_feed(approved, evidence, coverage, now=None, wallet_evidence=None, pro
     v2 = {}
     if programs is not None:
         from rules_v2 import PROGRAMS_SCHEMA_VERSION, build_programs
-        published, program_pending = build_programs(programs, evidence, now)
+        platform_evidence = platform_evidence or {}
+        if set(platform_evidence) & set(evidence):
+            raise ValueError('Platform source IDs must not shadow card sources')
+        published, program_pending = build_programs(programs, {**evidence, **platform_evidence}, now)
         v2 = {'programsSchemaVersion': PROGRAMS_SCHEMA_VERSION, 'rewardUnits': programs['rewardUnits'],
               'merchantSets': programs['merchantSets'], 'programs': published, 'programPending': program_pending}
     return {
@@ -276,15 +348,18 @@ def main():
     from rules_v2 import check_sources, load_catalog, validate_catalog
     programs = load_catalog(root / 'programs')
     validate_catalog(programs)
-    check_sources(programs, registry)
+    platform_registry = load_platform_registry(root)
+    check_sources(programs, registry + platform_registry)
     evidence = collect(registry)
     write_json(root / 'artifacts' / 'evidence.json', evidence)
+    platform_evidence = collect(platform_registry)
+    write_json(root / 'artifacts' / 'platform_evidence.json', platform_evidence)
     wallet_evidence = collect(json.loads((root / 'wallet_sources.json').read_text()))
     write_json(root / 'artifacts' / 'wallet_evidence.json', wallet_evidence)
     if args.publish:
         feed = build_feed(json.loads((root / 'approved.json').read_text()), evidence,
                           json.loads((root / 'catalog.json').read_text()), wallet_evidence=wallet_evidence,
-                          programs=programs)
+                          programs=programs, platform_evidence=platform_evidence)
         from eligibility_audit import build_eligibility_audit
         audit = build_eligibility_audit(feed, evidence)
         write_json(root / 'public' / 'eligibility-audit.json', audit)
@@ -305,6 +380,8 @@ def main():
             'conditionalRateOnlyPlanCount': sum(p['calculation'] is not None and p['calculation']['rounding'] == 'notModeled' for p in feed['assessmentProfiles'].values()),
             'fullyModeledCardCount': 0,
             'readableSourceCount': sum(bool(value.get('text')) for value in evidence.values()),
+            'platformSources': {sid: {'url': v['url'], 'render': v.get('render'), 'sha256': v.get('sha256'),
+                                      'error': v.get('error')} for sid, v in platform_evidence.items()},
             'sources': {cid: {'url': value['url'], 'sha256': value.get('sha256'),
                                'error': value.get('error'),
                                'supportingSources': value.get('supportingSources', {})}

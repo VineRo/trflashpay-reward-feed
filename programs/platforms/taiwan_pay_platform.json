@@ -1,0 +1,22 @@
+{
+  "id": "taiwan_pay_platform",
+  "issuer": "taiwanpay",
+  "name": "台灣Pay",
+  "rewardUnit": "taiwan_pay_points",
+  "selectors": [],
+  "exclusions": [],
+  "evidence": [],
+  "notCovering": [
+    "財金台灣Pay 活動（如「頂上加碼 掃 TWQR 享 10% 回饋」，限金融卡／帳戶）完整辦法尚待核對，平台層未建模。"
+  ],
+  "rules": [
+    {
+      "id": "taiwanpay.base",
+      "layer": "L2",
+      "kind": "base",
+      "group": "taiwanpay.main",
+      "status": "uncovered",
+      "notes": "財金台灣Pay 活動（如「頂上加碼 掃 TWQR 享 10% 回饋」，限金融卡／帳戶）完整辦法尚待核對，平台層未建模。"
+    }
+  ]
+}

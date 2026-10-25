@@ -1,0 +1,22 @@
+{
+  "id": "line_pay_platform",
+  "issuer": "linepay",
+  "name": "LINE Pay",
+  "rewardUnit": "line_points",
+  "selectors": [],
+  "exclusions": [],
+  "evidence": [],
+  "notCovering": [
+    "LINE Pay 官方未見平台本身一般消費回饋條款；LINE POINTS 多來自綁定的卡片，平台層未建模。"
+  ],
+  "rules": [
+    {
+      "id": "linepay.base",
+      "layer": "L2",
+      "kind": "base",
+      "group": "linepay.main",
+      "status": "uncovered",
+      "notes": "LINE Pay 官方未見平台本身一般消費回饋條款；LINE POINTS 多來自綁定的卡片，平台層未建模。"
+    }
+  ]
+}

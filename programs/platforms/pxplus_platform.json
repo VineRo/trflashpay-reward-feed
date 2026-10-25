@@ -1,0 +1,22 @@
+{
+  "id": "pxplus_platform",
+  "issuer": "pxplus",
+  "name": "全支付",
+  "rewardUnit": "px_points",
+  "selectors": [],
+  "exclusions": [],
+  "evidence": [],
+  "notCovering": [
+    "全支付官方未見一般消費的平台常態回饋比例；回饋多來自綁定銀行或限時活動，平台層未建模。"
+  ],
+  "rules": [
+    {
+      "id": "pxplus.base",
+      "layer": "L2",
+      "kind": "base",
+      "group": "pxplus.main",
+      "status": "uncovered",
+      "notes": "全支付官方未見一般消費的平台常態回饋比例；回饋多來自綁定銀行或限時活動，平台層未建模。"
+    }
+  ]
+}

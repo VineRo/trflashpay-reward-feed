@@ -24,5 +24,40 @@
     "twdValue": "1",
     "cashEquivalent": "yes",
     "redemptionNote": "鐵路加碼撥入正卡信用卡帳戶抵卡費；不可要求兌換現金或其他贈品，不與好多金合計。"
+  },
+  {
+    "id": "jko_coins",
+    "label": "街口幣",
+    "twdValue": null,
+    "cashEquivalent": "restricted",
+    "redemptionNote": "平台層尚未建模；點數價值未核對"
+  },
+  {
+    "id": "px_points",
+    "label": "全點",
+    "twdValue": null,
+    "cashEquivalent": "restricted",
+    "redemptionNote": "平台層尚未建模；點數價值未核對"
+  },
+  {
+    "id": "line_points",
+    "label": "LINE POINTS",
+    "twdValue": null,
+    "cashEquivalent": "restricted",
+    "redemptionNote": "平台層尚未建模；點數價值未核對"
+  },
+  {
+    "id": "taiwan_pay_points",
+    "label": "台灣Pay 紅利點數",
+    "twdValue": null,
+    "cashEquivalent": "restricted",
+    "redemptionNote": "平台層尚未建模；點數價值未核對"
+  },
+  {
+    "id": "ipass_green_points",
+    "label": "一卡通綠點",
+    "twdValue": "1",
+    "cashEquivalent": "restricted",
+    "redemptionNote": "可事後折抵近 30 日一卡通乘車、iPASS MONEY 生活繳費、三大超商及美廉社交易；得點隔月起 3 個月內使用"
   }
 ]
