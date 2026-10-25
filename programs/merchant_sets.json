@@ -1,0 +1,1147 @@
+[
+  {
+    "id": "tw_convenience_store",
+    "label": "臺灣便利商店",
+    "match": {
+      "brands": [
+        "7-ELEVEN",
+        "統一超商",
+        "全家便利商店",
+        "FamilyMart",
+        "萊爾富",
+        "Hi-Life",
+        "OK超商",
+        "OKmart"
+      ]
+    },
+    "matchConfidence": "brandOnly",
+    "openEnded": true,
+    "notes": "銀行條款只寫「便利超商消費」，未列品牌清單；未命中不代表確定不是便利商店"
+  },
+  {
+    "id": "pxmart_group",
+    "label": "全聯福利中心／大全聯",
+    "match": {
+      "brands": [
+        "全聯福利中心",
+        "全聯",
+        "大全聯",
+        "PX Mart"
+      ]
+    },
+    "matchConfidence": "issuerList",
+    "openEnded": false,
+    "notes": "CUBE 條款：全聯福利中心消費、大全聯消費（含實體門市與線上通路）"
+  },
+  {
+    "id": "cube_excluded_investment_fx_crypto_mcc",
+    "label": "數位貨幣、旅行支票與相關交易（MCC）",
+    "match": {
+      "mcc": [
+        "4829",
+        "6012",
+        "6211",
+        "6051"
+      ]
+    },
+    "matchConfidence": "issuerList",
+    "openEnded": true,
+    "notes": "條款列「包含但不限於」這些 MCC，另含未核准境外投資平台與匯兌平台"
+  },
+  {
+    "id": "gambling_mcc",
+    "label": "博奕類交易（MCC 7995）",
+    "match": {
+      "mcc": [
+        "7995"
+      ]
+    },
+    "matchConfidence": "issuerList",
+    "openEnded": true
+  },
+  {
+    "id": "cube_autumn_japan_c0",
+    "label": "日本必逛＋遊日必備之指定消費 3.5%",
+    "match": {
+      "brands": [
+        "日本實體消費",
+        "愛電王實體門市",
+        "大丸百貨福岡天神店",
+        "MITSUI OUTLET PARK實體商場",
+        "台場DiverCity Tokyo Plaza",
+        "BicCamera集團實體門市",
+        "Apple錢包指定交通卡(Suica 、PASMO、ICOCA)",
+        "GO Taxi App(預約叫車平台)"
+      ]
+    },
+    "matchConfidence": "issuerList",
+    "openEnded": false,
+    "notes": "S2 /:items/root/:items/responsivegrid/:items/cub_main/:items/cub_experiencefragme_227985757/experienceFragment/:items/root/:items/cub_cubelisttitle_co/:items/cub_cubelist_6160234"
+  },
+  {
+    "id": "cube_autumn_japan_c1",
+    "label": "日本四大機場指定免稅店 4%",
+    "match": {
+      "brands": [
+        "成田機場指定免稅店 (Fa-So-La DUTY FREE、JAPAN DUTY FREE、JAL DUTYFREE)",
+        "關西機場指定免稅店 (KIX DUTY FREE、TRK ARRIVAL Duty Free Shop、關西旅日記)",
+        "新千歲機場指定免稅店(New Chitose Airport Duty Free Shop)",
+        "福岡機場免稅店 (FUKUOKA AIRPORT DUTYFREE SHOP)"
+      ]
+    },
+    "matchConfidence": "issuerList",
+    "openEnded": false,
+    "notes": "S2 /:items/root/:items/responsivegrid/:items/cub_main/:items/cub_experiencefragme_227985757/experienceFragment/:items/root/:items/cub_cubelisttitle_co/:items/cub_cubelist_1315495_1263175720"
+  },
+  {
+    "id": "cube_autumn_japan_c2",
+    "label": "日本IP專賣店 / 人氣愛店 / 餐廳預約平台  5%",
+    "match": {
+      "brands": [
+        "IP專賣店：",
+        "寶可夢中心 5家指定門市",
+        "SANRIO 三麗鷗 14家指定門市",
+        "KIDDY LAND 6家指定門市",
+        "人氣愛店：",
+        "UNIQLO實體門市",
+        "Alpen GROUP實體門市",
+        "ABC-MART實體門市",
+        "Loft實體門市",
+        "3COINS 15家指定門市",
+        "餐廳預約平台：",
+        "Tabelog",
+        "TableCheck",
+        "OMAKASE"
+      ]
+    },
+    "matchConfidence": "issuerList",
+    "openEnded": false,
+    "notes": "S2 /:items/root/:items/responsivegrid/:items/cub_main/:items/cub_experiencefragme_227985757/experienceFragment/:items/root/:items/cub_cubelisttitle_co/:items/cub_cubelist_1315495"
+  },
+  {
+    "id": "cube_autumn_japan_c3",
+    "label": "海外旅遊規劃 ( 機票、訂房、行程) 3~5%",
+    "match": {
+      "brands": [
+        "5%",
+        "Klook 指定日本商品",
+        "Hotels.com 專屬網頁訂房",
+        "Expedia 專屬網頁訂房",
+        "3.5%",
+        "國泰航空",
+        "台灣虎航",
+        "Agoda",
+        "KKday",
+        "ezTravel易遊網",
+        "可樂旅遊",
+        "東南旅遊",
+        "Club Med",
+        "3%",
+        "Trip.com",
+        "Klook"
+      ]
+    },
+    "matchConfidence": "issuerList",
+    "openEnded": false,
+    "notes": "S2 /:items/root/:items/responsivegrid/:items/cub_main/:items/cub_experiencefragme_227985757/experienceFragment/:items/root/:items/cub_cubelisttitle_co/:items/cub_cubelist_1728141_510155689"
+  },
+  {
+    "id": "cube_autumn_japan_c4",
+    "label": "國內日系質感飯店 5%",
+    "match": {
+      "brands": [
+        "JR東日本大飯店 台北",
+        "礁溪寒沐酒店(住宿)",
+        "索拉利亞西鐵飯店台北西門",
+        "台北大倉久和大飯店",
+        "日勝生加賀屋國際溫泉飯店"
+      ]
+    },
+    "matchConfidence": "issuerList",
+    "openEnded": false,
+    "notes": "S2 /:items/root/:items/responsivegrid/:items/cub_main/:items/cub_experiencefragme_227985757/experienceFragment/:items/root/:items/cub_cubelisttitle_co/:items/cub_cubelist_1728141_928494793"
+  },
+  {
+    "id": "cube_autumn_japan_c5",
+    "label": "國內日系購物名店 3~8%",
+    "match": {
+      "brands": [
+        "8%",
+        "HANDS 台隆手創館 南港Lalaport店",
+        "5%",
+        "明曜百貨",
+        "台灣DON DON DONKI 唐吉訶德",
+        "Xpark水生公園",
+        "UNITED ARROWS LTD.官方購物網站",
+        "3.5%",
+        "遠東SOGO (含Garden City大巨蛋)",
+        "日藥本舖指定門市",
+        "3%",
+        "UNIQLO網路商店/直營店",
+        "GU台灣網路商店",
+        "MITSUI OUTLET PARK(林口、台中港、台南)",
+        "Mitsui Shopping Park LaLaport(南港、台中)"
+      ]
+    },
+    "matchConfidence": "issuerList",
+    "openEnded": false,
+    "notes": "S2 /:items/root/:items/responsivegrid/:items/cub_main/:items/cub_experiencefragme_227985757/experienceFragment/:items/root/:items/cub_cubelisttitle_co/:items/cub_cubelist_1728141_953230018"
+  },
+  {
+    "id": "cube_autumn_japan_c6",
+    "label": "國內日系美食饗宴 3.5~8%",
+    "match": {
+      "brands": [
+        "8%",
+        "橘色涮涮屋 (一館|二館|台中館)",
+        "Extension 1 by橘色",
+        "雞湯桑指定門市",
+        "朝炭 (含官網訂位)",
+        "初魚鮨 (限官網訂位與指定門市)",
+        "初魚 鉄板料亭 (限官網訂位與指定門市)",
+        "作  天麩羅．割烹 (限官網訂位)",
+        "濟安鮨日本料理",
+        "侍燒肉",
+        "梵燒肉",
+        "元一天婦羅",
+        "鳥苑",
+        "燒鳥すみか",
+        "山崎",
+        "成蔵",
+        "5%",
+        "爭鮮迴轉壽司",
+        "爭鮮PLUS",
+        "錢都日式涮涮鍋",
+        "客美多咖啡",
+        "すき家 SUKIYA",
+        "必勝客",
+        "3.5%",
+        "摩斯漢堡(APP+實體店)",
+        "台灣壽司郎"
+      ]
+    },
+    "matchConfidence": "issuerList",
+    "openEnded": false,
+    "notes": "S2 /:items/root/:items/responsivegrid/:items/cub_main/:items/cub_experiencefragme_227985757/experienceFragment/:items/root/:items/cub_cubelisttitle_co/:items/cub_cubelist_1728141_610126650"
+  },
+  {
+    "id": "cube_formosa_c0",
+    "label": "加油站",
+    "match": {
+      "brands": [
+        "台塑石油加油站",
+        "台亞加油站",
+        "福懋加油站",
+        "統一速邁樂(限本島)加油站"
+      ]
+    },
+    "matchConfidence": "issuerList",
+    "openEnded": false,
+    "notes": "S2 /:items/root/:items/responsivegrid/:items/cub_main/:items/cub_experiencefragme/experienceFragment/:items/root/:items/cub_cubelisttitle_co/:items/cub_cubelist_6312897_538970282"
+  },
+  {
+    "id": "cube_formosa_c1",
+    "label": "健康生活",
+    "match": {
+      "brands": [
+        "台塑生醫實體門市",
+        "長庚生技實體門市",
+        "台塑蔬菜實體門市",
+        "台塑購物網"
+      ]
+    },
+    "matchConfidence": "issuerList",
+    "openEnded": false,
+    "notes": "S2 /:items/root/:items/responsivegrid/:items/cub_main/:items/cub_experiencefragme/experienceFragment/:items/root/:items/cub_cubelisttitle_co/:items/cub_cubelist_1315495804"
+  },
+  {
+    "id": "cube_formosa_c2",
+    "label": "指定超商",
+    "match": {
+      "brands": [
+        "7-ELEVEN (7-11) 實體門市",
+        "全家便利商店 實體門市",
+        "萊爾富實體門市"
+      ]
+    },
+    "matchConfidence": "issuerList",
+    "openEnded": false,
+    "notes": "S2 /:items/root/:items/responsivegrid/:items/cub_main/:items/cub_experiencefragme/experienceFragment/:items/root/:items/cub_cubelisttitle_co/:items/cub_cubelist_1728141423"
+  },
+  {
+    "id": "cube_pxpay_supermarket",
+    "label": "量販超市",
+    "match": {
+      "brands": [
+        "全聯福利中心",
+        "大全聯",
+        "全聯福利中心",
+        "大全聯"
+      ]
+    },
+    "matchConfidence": "issuerList",
+    "openEnded": false,
+    "notes": "S2 /:items/root/:items/responsivegrid/:items/cub_main/:items/cub_experiencefragme_1955560120/experienceFragment/:items/root/:items/cub_cubelisttitle_co/:items/cub_cubelist_1315495804"
+  },
+  {
+    "id": "cube_pxpay_partners",
+    "label": "全支付國內通路",
+    "match": {
+      "brands": [
+        "全支付國內合作通路"
+      ]
+    },
+    "matchConfidence": "issuerList",
+    "openEnded": true,
+    "notes": "S2 /:items/root/:items/responsivegrid/:items/cub_main/:items/cub_experiencefragme_1955560120/experienceFragment/:items/root/:items/cub_cubelisttitle_co/:items/cub_cubelist_616023404"
+  },
+  {
+    "id": "cube_digital_ai",
+    "label": "AI工具",
+    "match": {
+      "brands": [
+        "ChatGPT",
+        "Canva",
+        "Claude",
+        "Cursor",
+        "Duolingo",
+        "Gamma",
+        "Gemini",
+        "Notion",
+        "Perplexity",
+        "Speak"
+      ]
+    },
+    "matchConfidence": "issuerList",
+    "openEnded": false,
+    "notes": "S2 /:items/root/:items/responsivegrid/:items/cub_main/:items/cub_experiencefragme_353283357/experienceFragment/:items/root/:items/cub_cubelisttitle_co/:items/cub_cubelist_616023404"
+  },
+  {
+    "id": "cube_digital_streaming",
+    "label": "數位/串流平台",
+    "match": {
+      "brands": [
+        "Apple 媒體服務",
+        "Google Play",
+        "Disney+",
+        "Netflix",
+        "Spotify",
+        "YouTube Premium",
+        "Max",
+        "App Store",
+        "Apple Music",
+        "iCloud",
+        "Apple TV+",
+        "Apple Arcade",
+        "Apple One",
+        "iTunes"
+      ]
+    },
+    "matchConfidence": "issuerList",
+    "openEnded": false,
+    "notes": "S2 /:items/root/:items/responsivegrid/:items/cub_main/:items/cub_experiencefragme_353283357/experienceFragment/:items/root/:items/cub_cubelisttitle_co/:items/cub_cubelist_1315495804；候選別名依同類別或方案 paragraphNoticeContent；原始標籤及指定品項／門市／請款限制仍保留，須由 issuerDecision 確認。"
+  },
+  {
+    "id": "cube_digital_shopping",
+    "label": "網購平台",
+    "match": {
+      "brands": [
+        "蝦皮購物",
+        "momo購物網",
+        "PChome 24h購物(不含儲值及電子票券)",
+        "小樹購(不含電子票券)",
+        "PChome 24h購物",
+        "小樹購",
+        "momo-EC",
+        "PChome 24h書店"
+      ]
+    },
+    "matchConfidence": "issuerList",
+    "openEnded": false,
+    "notes": "S2 /:items/root/:items/responsivegrid/:items/cub_main/:items/cub_experiencefragme_353283357/experienceFragment/:items/root/:items/cub_cubelisttitle_co/:items/cub_cubelist_631289756；候選別名依同類別或方案 paragraphNoticeContent；原始標籤及指定品項／門市／請款限制仍保留，須由 issuerDecision 確認。"
+  },
+  {
+    "id": "cube_digital_international",
+    "label": "國際電商",
+    "match": {
+      "brands": [
+        "Coupang 酷澎(台灣)",
+        "淘寶/天貓",
+        "淘寶",
+        "天貓",
+        "Coupang 酷澎",
+        "酷澎",
+        "Coupang"
+      ]
+    },
+    "matchConfidence": "issuerList",
+    "openEnded": false,
+    "notes": "S2 /:items/root/:items/responsivegrid/:items/cub_main/:items/cub_experiencefragme_353283357/experienceFragment/:items/root/:items/cub_cubelisttitle_co/:items/cub_cubelist_1728141423；候選別名依同類別或方案 paragraphNoticeContent；原始標籤及指定品項／門市／請款限制仍保留，須由 issuerDecision 確認。"
+  },
+  {
+    "id": "cube_dining_shopping_department",
+    "label": "國內指定百貨",
+    "match": {
+      "brands": [
+        "遠東SOGO百貨",
+        "遠東Garden City",
+        "新光三越",
+        "遠東百貨",
+        "台北101",
+        "BELLAVITA",
+        "微風廣場",
+        "統一時代台北店(不含DREAM PLAZA)",
+        "誠品生活",
+        "ATT 4 FUN",
+        "京站",
+        "美麗華",
+        "NOKE忠泰樂生活",
+        "大葉高島屋",
+        "Mitsui Shopping Park LaLaport(南港、台中)",
+        "宏匯廣場",
+        "台茂購物中心",
+        "大江國際購物中心",
+        "Big City遠東巨城購物中心",
+        "中友百貨",
+        "廣三SOGO",
+        "南紡購物中心",
+        "耐斯廣場",
+        "夢時代",
+        "漢神百貨",
+        "漢神巨蛋",
+        "新月廣場",
+        "CITYLINK",
+        "秀泰生活",
+        "環球購物中心",
+        "太平洋百貨",
+        "華泰名品城",
+        "SKM Park",
+        "MITSUI OUTLET PARK(林口、台中港、台南)",
+        "統一時代台北店",
+        "Mitsui Shopping Park LaLaport",
+        "MITSUI OUTLET PARK",
+        "微風南京",
+        "微風松高",
+        "微風信義",
+        "微風南山",
+        "NOKE",
+        "忠泰樂生活",
+        "Big City",
+        "遠東巨城購物中心"
+      ]
+    },
+    "matchConfidence": "issuerList",
+    "openEnded": false,
+    "notes": "S2 /:items/root/:items/responsivegrid/:items/cub_main/:items/cub_experiencefragme_1462845899/experienceFragment/:items/root/:items/cub_cubelisttitle_co/:items/cub_cubelist_1315495；候選別名依同類別或方案 paragraphNoticeContent；原始標籤及指定品項／門市／請款限制仍保留，須由 issuerDecision 確認。"
+  },
+  {
+    "id": "cube_dining_shopping_delivery",
+    "label": "國內外送平台",
+    "match": {
+      "brands": [
+        "Uber Eats",
+        "foodpanda"
+      ]
+    },
+    "matchConfidence": "issuerList",
+    "openEnded": false,
+    "notes": "S2 /:items/root/:items/responsivegrid/:items/cub_main/:items/cub_experiencefragme_1462845899/experienceFragment/:items/root/:items/cub_cubelisttitle_co/:items/cub_cubelist_631289756"
+  },
+  {
+    "id": "cube_dining_shopping_restaurants",
+    "label": "國內餐飲",
+    "match": {
+      "mcc": [
+        "5811",
+        "5812",
+        "5814",
+        "5462"
+      ]
+    },
+    "matchConfidence": "issuerList",
+    "openEnded": false,
+    "notes": "S2 /:items/root/:items/responsivegrid/:items/cub_main/:items/cub_experiencefragme_1462845899/experienceFragment/:items/root/:items/cub_cubelisttitle_co/:items/cub_cubelist_1728141423"
+  },
+  {
+    "id": "cube_dining_shopping_drugstore",
+    "label": "國內藥妝",
+    "match": {
+      "brands": [
+        "康是美",
+        "屈臣氏"
+      ]
+    },
+    "matchConfidence": "issuerList",
+    "openEnded": false,
+    "notes": "S2 /:items/root/:items/responsivegrid/:items/cub_main/:items/cub_experiencefragme_1462845899/experienceFragment/:items/root/:items/cub_cubelisttitle_co/:items/cub_cubelist_616023404"
+  },
+  {
+    "id": "cube_travel_overseas",
+    "label": "指定海外消費",
+    "match": {
+      "brands": [
+        "海外實體消費(含國外餐飲、飯店到店付款等)"
+      ]
+    },
+    "matchConfidence": "issuerList",
+    "openEnded": true,
+    "notes": "S2 /:items/root/:items/responsivegrid/:items/cub_main/:items/cub_experiencefragme_1916958314/experienceFragment/:items/root/:items/cub_cubelisttitle_co/:items/cub_cubelist_1315495804"
+  },
+  {
+    "id": "cube_travel_japan_parks",
+    "label": "日本指定遊樂園",
+    "match": {
+      "brands": [
+        "東京迪士尼樂園",
+        "東京華納兄弟哈利波特影城",
+        "大阪環球影城(USJ)",
+        "大阪環球影城",
+        "USJ",
+        "Tokyo Disney Resort",
+        "Warner Bros. Studios"
+      ]
+    },
+    "matchConfidence": "issuerList",
+    "openEnded": false,
+    "notes": "S2 /:items/root/:items/responsivegrid/:items/cub_main/:items/cub_experiencefragme_1916958314/experienceFragment/:items/root/:items/cub_cubelisttitle_co/:items/cub_cubelist_631289756；候選別名依同類別或方案 paragraphNoticeContent；原始標籤及指定品項／門市／請款限制仍保留，須由 issuerDecision 確認。"
+  },
+  {
+    "id": "cube_travel_transport",
+    "label": "指定國內外交通",
+    "match": {
+      "brands": [
+        "Apple錢包指定交通卡 (SUICA 、PASMO、ICOCA)",
+        "Uber",
+        "Grab",
+        "台灣高鐵",
+        "yoxi",
+        "台灣大車隊",
+        "iRent",
+        "和運租車",
+        "格上租車",
+        "高鐵"
+      ]
+    },
+    "matchConfidence": "issuerList",
+    "openEnded": false,
+    "notes": "S2 /:items/root/:items/responsivegrid/:items/cub_main/:items/cub_experiencefragme_1916958314/experienceFragment/:items/root/:items/cub_cubelisttitle_co/:items/cub_cubelist_1728141423；候選別名依同類別或方案 paragraphNoticeContent；原始標籤及指定品項／門市／請款限制仍保留，須由 issuerDecision 確認。"
+  },
+  {
+    "id": "cube_travel_airlines",
+    "label": "指定航空公司",
+    "match": {
+      "brands": [
+        "中華航空",
+        "長榮航空",
+        "星宇航空",
+        "台灣虎航",
+        "國泰航空",
+        "樂桃航空",
+        "阿聯酋航空",
+        "酷航",
+        "捷星航空",
+        "日本航空",
+        "ANA全日空",
+        "亞洲航空",
+        "聯合航空",
+        "新加坡航空",
+        "越捷航空",
+        "大韓航空",
+        "達美航空",
+        "土耳其航空",
+        "卡達航空",
+        "法國航空",
+        "ANA",
+        "全日空",
+        "AirAsia Move"
+      ]
+    },
+    "matchConfidence": "issuerList",
+    "openEnded": false,
+    "notes": "S2 /:items/root/:items/responsivegrid/:items/cub_main/:items/cub_experiencefragme_1916958314/experienceFragment/:items/root/:items/cub_cubelisttitle_co/:items/cub_cubelist_616023404；候選別名依同類別或方案 paragraphNoticeContent；原始標籤及指定品項／門市／請款限制仍保留，須由 issuerDecision 確認。"
+  },
+  {
+    "id": "cube_travel_hotels",
+    "label": "指定飯店住宿",
+    "match": {
+      "brands": [
+        "國內飯店住宿",
+        "星野集團",
+        "全球迪士尼飯店",
+        "東橫INN"
+      ]
+    },
+    "matchConfidence": "issuerList",
+    "openEnded": true,
+    "notes": "S2 /:items/root/:items/responsivegrid/:items/cub_main/:items/cub_experiencefragme_1916958314/experienceFragment/:items/root/:items/cub_cubelisttitle_co/:items/cub_cubelist_2016399573"
+  },
+  {
+    "id": "cube_travel_booking",
+    "label": "指定旅遊/訂房平台",
+    "match": {
+      "brands": [
+        "KKday",
+        "Klook",
+        "Agoda",
+        "Airbnb",
+        "Booking.com",
+        "Trip.com",
+        "ezTravel易遊網",
+        "ezTravel",
+        "易遊網"
+      ]
+    },
+    "matchConfidence": "issuerList",
+    "openEnded": false,
+    "notes": "S2 /:items/root/:items/responsivegrid/:items/cub_main/:items/cub_experiencefragme_1916958314/experienceFragment/:items/root/:items/cub_cubelisttitle_co/:items/cub_cubelist；候選別名依同類別或方案 paragraphNoticeContent；原始標籤及指定品項／門市／請款限制仍保留，須由 issuerDecision 確認。"
+  },
+  {
+    "id": "cube_travel_agency",
+    "label": "指定旅行社",
+    "match": {
+      "brands": [
+        "雄獅旅遊",
+        "可樂旅遊",
+        "東南旅遊",
+        "五福旅遊",
+        "燦星旅遊",
+        "山富旅遊",
+        "長汎假期",
+        "鳳凰旅行社",
+        "Ezfly易飛網",
+        "理想旅遊",
+        "永利旅行社",
+        "三賀旅行社",
+        "Ezfly",
+        "易飛網",
+        "雄獅旅行社"
+      ]
+    },
+    "matchConfidence": "issuerList",
+    "openEnded": false,
+    "notes": "S2 /:items/root/:items/responsivegrid/:items/cub_main/:items/cub_experiencefragme_1916958314/experienceFragment/:items/root/:items/cub_cubelisttitle_co/:items/cub_cubelist_874726023；候選別名依同類別或方案 paragraphNoticeContent；原始標籤及指定品項／門市／請款限制仍保留，須由 issuerDecision 確認。"
+  },
+  {
+    "id": "cube_select_charging",
+    "label": "充電站",
+    "match": {
+      "brands": [
+        "U-POWER",
+        "EVOASIS",
+        "EVALUE",
+        "TAIL",
+        "iCharging"
+      ]
+    },
+    "matchConfidence": "issuerList",
+    "openEnded": false,
+    "notes": "S2 /:items/root/:items/responsivegrid/:items/cub_main/:items/cub_experiencefragme_577432954/experienceFragment/:items/root/:items/cub_cubelisttitle_co/:items/cub_cubelist_6312897_538970282"
+  },
+  {
+    "id": "cube_select_parking",
+    "label": "停車費",
+    "match": {
+      "brands": [
+        "車麻吉(不含加油、充電)",
+        "uTagGo(不含月租停車)",
+        "車麻吉",
+        "uTagGo"
+      ]
+    },
+    "matchConfidence": "issuerList",
+    "openEnded": false,
+    "notes": "S2 /:items/root/:items/responsivegrid/:items/cub_main/:items/cub_experiencefragme_577432954/experienceFragment/:items/root/:items/cub_cubelisttitle_co/:items/cub_cubelist_6312897；候選別名依同類別或方案 paragraphNoticeContent；原始標籤及指定品項／門市／請款限制仍保留，須由 issuerDecision 確認。"
+  },
+  {
+    "id": "cube_select_supermarket",
+    "label": "量販超市",
+    "match": {
+      "brands": [
+        "萬家福(樂家康)",
+        "LOPIA台灣",
+        "全聯福利中心 實體門市(不含大全聯)",
+        "全聯福利中心",
+        "萬家福",
+        "樂家康",
+        "LOPIA"
+      ]
+    },
+    "matchConfidence": "issuerList",
+    "openEnded": false,
+    "notes": "S2 /:items/root/:items/responsivegrid/:items/cub_main/:items/cub_experiencefragme_577432954/experienceFragment/:items/root/:items/cub_cubelisttitle_co/:items/cub_cubelist_1315495804；候選別名依同類別或方案 paragraphNoticeContent；原始標籤及指定品項／門市／請款限制仍保留，須由 issuerDecision 確認。"
+  },
+  {
+    "id": "cube_select_fuel",
+    "label": "指定加油",
+    "match": {
+      "brands": [
+        "台灣中油-直營站",
+        "台灣中油",
+        "中油"
+      ]
+    },
+    "matchConfidence": "issuerList",
+    "openEnded": false,
+    "notes": "S2 /:items/root/:items/responsivegrid/:items/cub_main/:items/cub_experiencefragme_577432954/experienceFragment/:items/root/:items/cub_cubelisttitle_co/:items/cub_cubelist_631289756；候選別名依同類別或方案 paragraphNoticeContent；原始標籤及指定品項／門市／請款限制仍保留，須由 issuerDecision 確認。"
+  },
+  {
+    "id": "cube_select_convenience",
+    "label": "指定超商",
+    "match": {
+      "brands": [
+        "7-ELEVEN (7-11) 實體門市",
+        "全家便利商店 實體門市",
+        "7-ELEVEN",
+        "全家便利商店",
+        "7-11"
+      ]
+    },
+    "matchConfidence": "issuerList",
+    "openEnded": false,
+    "notes": "S2 /:items/root/:items/responsivegrid/:items/cub_main/:items/cub_experiencefragme_577432954/experienceFragment/:items/root/:items/cub_cubelisttitle_co/:items/cub_cubelist_1728141423；候選別名依同類別或方案 paragraphNoticeContent；原始標籤及指定品項／門市／請款限制仍保留，須由 issuerDecision 確認。"
+  },
+  {
+    "id": "cube_select_home",
+    "label": "生活家居",
+    "match": {
+      "brands": [
+        "IKEA宜家家居",
+        "IKEA",
+        "宜家家居"
+      ]
+    },
+    "matchConfidence": "issuerList",
+    "openEnded": false,
+    "notes": "S2 /:items/root/:items/responsivegrid/:items/cub_main/:items/cub_experiencefragme_577432954/experienceFragment/:items/root/:items/cub_cubelisttitle_co/:items/cub_cubelist_616023404；候選別名依同類別或方案 paragraphNoticeContent；原始標籤及指定品項／門市／請款限制仍保留，須由 issuerDecision 確認。"
+  },
+  {
+    "id": "cube_birthday_c0",
+    "label": "慶生月活動",
+    "match": {
+      "brands": [
+        "團體賽",
+        "全新登場「慶生月揪團派隊」",
+        "活動期間：2026/10/1~12/31",
+        "限定三名生日為10~12月之CUBE信用卡正卡持卡人組成團隊，三位團隊成員之CUBE信用卡於指定期間內「慶生月」指定通路加總消費金額達5,000元，即可參與「好運獎」抽獎活動；累積消費金額前十名之團隊，可再參與「彩蛋獎」抽獎活動。",
+        "個人賽",
+        "「慶生月踩點吉章」",
+        "壽星於生日當月，任一子任務完成一筆消費達NT$500(含)以上可集一章，達成三項子任務集滿三章享200點小樹點(信用卡)。",
+        "「慶生月揪團派隊」&「慶生月踩點吉章」活動詳情>>"
+      ]
+    },
+    "matchConfidence": "issuerList",
+    "openEnded": false,
+    "notes": "S2 /:items/root/:items/responsivegrid/:items/cub_main/:items/cub_experiencefragme_1388148381/experienceFragment/:items/root/:items/cub_cubelisttitle_co_1581592217/:items/cub_cubelist_1315495"
+  },
+  {
+    "id": "cube_birthday_c1",
+    "label": "口碑名店聚餐首選，熱鬧慶生  10%",
+    "match": {
+      "brands": [
+        "大腕燒肉",
+        "茶六燒肉堂",
+        "老井極上燒肉",
+        "屋馬燒肉",
+        "鼎王麻辣鍋",
+        "無老鍋",
+        "老四川巴蜀麻辣燙",
+        "詹記麻辣火鍋"
+      ]
+    },
+    "matchConfidence": "issuerList",
+    "openEnded": false,
+    "notes": "S2 /:items/root/:items/responsivegrid/:items/cub_main/:items/cub_experiencefragme_1388148381/experienceFragment/:items/root/:items/cub_cubelisttitle_co_1581592217/:items/cub_cubelist_2016399_1553075193"
+  },
+  {
+    "id": "cube_birthday_c2",
+    "label": "中西式佳餚、火鍋， 豐富美味   10%",
+    "match": {
+      "brands": [
+        "青沐",
+        "所 SUO",
+        "嵩 sung",
+        "JAI 宅",
+        "新東南海鮮餐廳",
+        "龍都酒樓",
+        "吉品海鮮餐廳",
+        "老新台菜",
+        "輕井澤鍋物",
+        "湯棧"
+      ]
+    },
+    "matchConfidence": "issuerList",
+    "openEnded": false,
+    "notes": "S2 /:items/root/:items/responsivegrid/:items/cub_main/:items/cub_experiencefragme_1388148381/experienceFragment/:items/root/:items/cub_cubelisttitle_co_1581592217/:items/cub_cubelist_2016399_2089826548"
+  },
+  {
+    "id": "cube_birthday_c3",
+    "label": "主廚演繹料理魅力， 沉浸感動   10%",
+    "match": {
+      "brands": [
+        "Hābu小餐館「榮獲2026米其林一星」",
+        "空盤 KOMBOI",
+        "野驢小餐館",
+        "肉料理福"
+      ]
+    },
+    "matchConfidence": "issuerList",
+    "openEnded": false,
+    "notes": "S2 /:items/root/:items/responsivegrid/:items/cub_main/:items/cub_experiencefragme_1388148381/experienceFragment/:items/root/:items/cub_cubelisttitle_co_1581592217/:items/cub_cubelist_2016399_733788314"
+  },
+  {
+    "id": "cube_birthday_c4",
+    "label": "精選人氣餐廳及甜點咖啡   10%",
+    "match": {
+      "brands": [
+        "台灣壽司郎",
+        "UNCLE SHAWN 燒肉餐酒館",
+        "UNCLE RAY串燒·牛飲·咖喱 台中店",
+        "蜀叔麻辣鍋 台北店",
+        "Pastaio",
+        "Pastaio noodle cafe",
+        "小方舟串燒酒場",
+        "毛丼丼飯專門店",
+        "毛房蔥柚鍋．冷藏肉專門",
+        "毛蔬亞洲蔬食",
+        "法國的秘密甜點(大安店/官網)",
+        "法朋烘焙甜點坊(門市/官網)",
+        "Miss V Bakery(門市/官網)",
+        "興波咖啡 華山旗艦店/南港展覽館店"
+      ]
+    },
+    "matchConfidence": "issuerList",
+    "openEnded": false,
+    "notes": "S2 /:items/root/:items/responsivegrid/:items/cub_main/:items/cub_experiencefragme_1388148381/experienceFragment/:items/root/:items/cub_cubelisttitle_co_1581592217/:items/cub_cubelist_2016399573"
+  },
+  {
+    "id": "cube_birthday_c5",
+    "label": "日本指定樂園、遊戲及旅遊時光   3.5%/10%",
+    "match": {
+      "brands": [
+        "10%",
+        "日本指定遊樂園實體消費：",
+        "東京迪士尼樂園",
+        "大阪環球影城(USJ)",
+        "10%",
+        "PlayStation",
+        "Nintendo",
+        "巴哈姆特動畫瘋",
+        "3.5%",
+        "Klook"
+      ]
+    },
+    "matchConfidence": "issuerList",
+    "openEnded": false,
+    "notes": "S2 /:items/root/:items/responsivegrid/:items/cub_main/:items/cub_experiencefragme_1388148381/experienceFragment/:items/root/:items/cub_cubelisttitle_co_1581592217/:items/cub_cubelist_631289756"
+  },
+  {
+    "id": "cube_birthday_c6",
+    "label": "歌聲暢快身心及 都會享樂體驗   5%/10%",
+    "match": {
+      "brands": [
+        "10%",
+        "錢櫃KTV",
+        "好樂迪KTV",
+        "星聚點KTV",
+        "享溫馨KTV",
+        "5%",
+        "FunNow"
+      ]
+    },
+    "matchConfidence": "issuerList",
+    "openEnded": false,
+    "notes": "S2 /:items/root/:items/responsivegrid/:items/cub_main/:items/cub_experiencefragme_1388148381/experienceFragment/:items/root/:items/cub_cubelisttitle_co_1581592217/:items/cub_cubelist_1315495804"
+  },
+  {
+    "id": "cube_birthday_c7",
+    "label": "購物盡興外送便利，增添精彩    3.5%",
+    "match": {
+      "brands": [
+        "新光三越 (不含SKM Park Outlets 高雄草衙)",
+        "Uber Eats"
+      ]
+    },
+    "matchConfidence": "issuerList",
+    "openEnded": false,
+    "notes": "S2 /:items/root/:items/responsivegrid/:items/cub_main/:items/cub_experiencefragme_1388148381/experienceFragment/:items/root/:items/cub_cubelisttitle_co_1581592217/:items/cub_cubelist"
+  },
+  {
+    "id": "cube_kids_c0",
+    "label": "如何解鎖童樂匯？",
+    "match": {
+      "brands": [
+        "解鎖期間：2026/7/1 - 11/20，每月20日(含)前客戶須符合以下2項條件，次月1日起可切換至童樂匯。",
+        "．條件一：客戶與其未成年子女須持有本行帳戶。",
+        "． 條件二：客戶須持有有效CUBE信用卡正卡。",
+        "活動詳情>>"
+      ]
+    },
+    "matchConfidence": "issuerList",
+    "openEnded": false,
+    "notes": "S2 /:items/root/:items/responsivegrid/:items/cub_main/:items/cub_experiencefragme_952464071/experienceFragment/:items/root/:items/cub_cubelisttitle_co/:items/cub_cubelist_1315495804"
+  },
+  {
+    "id": "cube_kids_c1",
+    "label": "保費 1%",
+    "match": {
+      "brands": [
+        "國內各大壽險公司保費",
+        "國內各大產險公司保費"
+      ]
+    },
+    "matchConfidence": "issuerList",
+    "openEnded": false,
+    "notes": "S2 /:items/root/:items/responsivegrid/:items/cub_main/:items/cub_experiencefragme_952464071/experienceFragment/:items/root/:items/cub_cubelisttitle_co/:items/cub_cubelist_2002624_1534965544"
+  },
+  {
+    "id": "cube_kids_c2",
+    "label": "指定私校學費 1%",
+    "match": {
+      "brands": [
+        "台北美國學校",
+        "台北歐洲學校",
+        "台北市私立道明外僑學校",
+        "馬禮遜學校",
+        "康乃薾美國學校",
+        "台北私立立人國際國小",
+        "康橋國際學校",
+        "華盛頓小學",
+        "復興實驗高中",
+        "維多利亞雙語中小學",
+        "高雄美國學校"
+      ]
+    },
+    "matchConfidence": "issuerList",
+    "openEnded": false,
+    "notes": "S2 /:items/root/:items/responsivegrid/:items/cub_main/:items/cub_experiencefragme_952464071/experienceFragment/:items/root/:items/cub_cubelisttitle_co/:items/cub_cubelist_2002624"
+  },
+  {
+    "id": "cube_kids_c3",
+    "label": "親子餐廳 5%",
+    "match": {
+      "brands": [
+        "台灣壽司郎",
+        "雞湯大叔",
+        "陶板屋(限使用王品瘋Pay結帳)",
+        "YAYOI彌生軒(限街邊店)",
+        "大戶屋",
+        "大樹先生的家",
+        "Money Jump 媽妳講親子餐廳",
+        "小島3.5度親子餐廳"
+      ]
+    },
+    "matchConfidence": "issuerList",
+    "openEnded": false,
+    "notes": "S2 /:items/root/:items/responsivegrid/:items/cub_main/:items/cub_experiencefragme_952464071/experienceFragment/:items/root/:items/cub_cubelisttitle_co/:items/cub_cubelist_2016399573"
+  },
+  {
+    "id": "cube_kids_c4",
+    "label": "親子育樂5%",
+    "match": {
+      "brands": [
+        "Klook",
+        "東京迪士尼樂園",
+        "大阪環球影城(USJ)",
+        "麗寶樂園",
+        "六福村主題樂園",
+        "九族文化村",
+        "劍湖山世界主題樂園",
+        "義大遊樂世界",
+        "小叮噹科學園區主題樂園",
+        "Xpark",
+        "巧虎夢想樂園"
+      ]
+    },
+    "matchConfidence": "issuerList",
+    "openEnded": false,
+    "notes": "S2 /:items/root/:items/responsivegrid/:items/cub_main/:items/cub_experiencefragme_952464071/experienceFragment/:items/root/:items/cub_cubelisttitle_co/:items/cub_cubelist_631289756"
+  },
+  {
+    "id": "cube_kids_c5",
+    "label": "親子飯店 5%",
+    "match": {
+      "brands": [
+        "台北喜來登大飯店",
+        "蘭城晶英酒店",
+        "台南晶英酒店",
+        "礁溪寒沐酒店",
+        "大溪笠復威斯汀度假酒店",
+        "煙波大飯店新竹湖濱館",
+        "麗寶福容大飯店",
+        "雲品溫泉酒店",
+        "和逸飯店(台南西門館、桃園館)",
+        "義大皇家酒店",
+        "高雄萬豪酒店",
+        "墾丁凱撒大飯店",
+        "花蓮遠雄悅來大飯店",
+        "瑞穗天合國際觀光酒店",
+        "六福莊",
+        "宜蘭礁溪鳳凰酒店",
+        "桃園名人堂花園大飯店"
+      ]
+    },
+    "matchConfidence": "issuerList",
+    "openEnded": false,
+    "notes": "S2 /:items/root/:items/responsivegrid/:items/cub_main/:items/cub_experiencefragme_952464071/experienceFragment/:items/root/:items/cub_cubelisttitle_co/:items/cub_cubelist_2016399"
+  },
+  {
+    "id": "cube_kids_c6",
+    "label": "母嬰用品店 5%",
+    "match": {
+      "brands": [
+        "卡多摩嬰童館",
+        "媽咪愛",
+        "樂兒屋",
+        "寶齡婦幼館/ 步步樂BuBuLuv",
+        "安琪兒婦嬰百貨",
+        "宜兒樂",
+        "麗兒采家",
+        "Taobaby濤寶日記",
+        "俏媽咪",
+        "媽媽好"
+      ]
+    },
+    "matchConfidence": "issuerList",
+    "openEnded": false,
+    "notes": "S2 /:items/root/:items/responsivegrid/:items/cub_main/:items/cub_experiencefragme_952464071/experienceFragment/:items/root/:items/cub_cubelisttitle_co/:items/cub_cubelist_2002624964"
+  },
+  {
+    "id": "cube_kids_c7",
+    "label": "五感體驗課 10%",
+    "match": {
+      "brands": [
+        "雲門舞集舞蹈教室",
+        "Yamaha音樂教室",
+        "TutorABC Junior",
+        "Etalking Kids",
+        "iSKI滑雪俱樂部",
+        "汐游寶寶/風城游汐谷"
+      ]
+    },
+    "matchConfidence": "issuerList",
+    "openEnded": false,
+    "notes": "S2 /:items/root/:items/responsivegrid/:items/cub_main/:items/cub_experiencefragme_952464071/experienceFragment/:items/root/:items/cub_cubelisttitle_co/:items/cub_cubelist_616023404"
+  },
+  {
+    "id": "cube_kids_c8",
+    "label": "嬰幼童品牌官網 10%",
+    "match": {
+      "brands": [
+        "10mois台灣官網",
+        "Mamas&Papas台灣官網",
+        "古北町台灣官網",
+        "Little Wonders台灣官網",
+        "Seahorse Originals台灣官網"
+      ]
+    },
+    "matchConfidence": "issuerList",
+    "openEnded": false,
+    "notes": "S2 /:items/root/:items/responsivegrid/:items/cub_main/:items/cub_experiencefragme_952464071/experienceFragment/:items/root/:items/cub_cubelisttitle_co/:items/cub_cubelist_1728141423"
+  },
+  {
+    "id": "cube_pxmart_only",
+    "label": "全聯福利中心",
+    "match": {
+      "brands": [
+        "全聯福利中心"
+      ]
+    },
+    "matchConfidence": "issuerList",
+    "openEnded": false,
+    "notes": "S2 集精選 paragraphNoticeContent（對應方案錨點）"
+  },
+  {
+    "id": "cube_seven",
+    "label": "7-ELEVEN",
+    "match": {
+      "brands": [
+        "7-ELEVEN",
+        "7-11"
+      ]
+    },
+    "matchConfidence": "issuerList",
+    "openEnded": false,
+    "notes": "S2 集精選 paragraphNoticeContent（對應方案錨點）"
+  },
+  {
+    "id": "cube_family",
+    "label": "全家便利商店",
+    "match": {
+      "brands": [
+        "全家便利商店"
+      ]
+    },
+    "matchConfidence": "issuerList",
+    "openEnded": false,
+    "notes": "S2 集精選 paragraphNoticeContent（對應方案錨點）"
+  },
+  {
+    "id": "fubon_convenience",
+    "label": "富邦一般回饋排除：便利商店及綁定支付",
+    "match": {
+      "brands": [
+        "便利商店",
+        "7-ELEVEN",
+        "7-11",
+        "全家便利商店",
+        "FamilyMart",
+        "萊爾富",
+        "Hi-Life",
+        "OK超商"
+      ]
+    },
+    "matchConfidence": "brandOnly",
+    "openEnded": true,
+    "notes": "PDF定義全體便利商店及綁定各行動支付；候選名稱只協助辨識，名稱未命中不能推論符合一般消費。"
+  },
+  {
+    "id": "fubon_pxgroup",
+    "label": "全聯集團所有通路與支付方式",
+    "match": {
+      "brands": [
+        "全聯",
+        "大全聯",
+        "PX Mart",
+        "PXMart"
+      ]
+    },
+    "matchConfidence": "brandOnly",
+    "openEnded": true,
+    "notes": "PDF排除全聯集團商店的所有支付方式；不可只憑PXPay／全支付等支付工具名稱認定商店屬全聯。名稱不足以判定時保留未知。"
+  },
+  {
+    "id": "ubereats_costco_zone",
+    "label": "UberEats好市多專區候選",
+    "match": {
+      "brands": [
+        "UberEats好市多專區",
+        "Uber Eats好市多專區",
+        "優步－Ｃｏｓｔｃｏ",
+        "優步-Costco"
+      ]
+    },
+    "matchConfidence": "brandOnly",
+    "openEnded": true,
+    "notes": "銀行以優步－Ｃｏｓｔｃｏ或指定特店代號認列；名稱只為候選，另須規則issuerDecision確認。"
+  },
+  {
+    "id": "thsr_tra_ticket",
+    "label": "高鐵／臺鐵購票候選",
+    "match": {
+      "brands": [
+        "台灣高鐵",
+        "臺灣高鐵",
+        "高鐵",
+        "THSR",
+        "臺鐵",
+        "台鐵",
+        "台灣鐵路",
+        "臺灣鐵路",
+        "Taiwan Railway"
+      ]
+    },
+    "matchConfidence": "brandOnly",
+    "openEnded": true,
+    "notes": "限官方網站／App／臨櫃／自動售票機；回數票／定期票App續購、升等、車上補票、悠遊卡自動加值等由銀行認列gate排除。"
+  }
+]

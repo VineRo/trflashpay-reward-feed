@@ -1,0 +1,764 @@
+{
+  "id": "fubon_costco_credit",
+  "issuer": "fubon",
+  "name": "台北富邦Costco聯名卡",
+  "rewardUnit": "costco_gold",
+  "variants": [
+    "world",
+    "titanium_business",
+    "titanium"
+  ],
+  "notCovering": [
+    "保費特殊專案列未涵蓋，不能將一般回饋排除解讀為整卡保費零回饋。",
+    "基本權益歷史交易（2026-10-24核對日前）、退款扣回、實際發放與兌換操作未建模。",
+    "銀行認列需明確確認：三類基本通路互斥，活動消費日須與授權日同一台北日期；日期不同仍屬未涵蓋，不能直接以授權日冒充消費日。",
+    "前月合格店外消費、本人帳戶自扣、發放時狀態、每月登錄、剩餘上限均由呼叫端提供，不從帳本或公開頁面推定。"
+  ],
+  "selectors": [
+    {
+      "id": "costco_variant",
+      "kind": "variant",
+      "source": "userDeclared",
+      "label": "回饋時有效的卡別",
+      "history": true,
+      "values": [
+        "world",
+        "titanium_business",
+        "titanium"
+      ]
+    },
+    {
+      "id": "costco_member",
+      "kind": "flag",
+      "source": "userDeclared",
+      "label": "Costco會員資格有效",
+      "history": true
+    },
+    {
+      "id": "costco_prev_month_outside_spend",
+      "kind": "tier",
+      "source": "userDeclared",
+      "label": "購票消費日前一個曆月，銀行認列的新增店外一般消費（非帳本推算）",
+      "history": true,
+      "values": [
+        "below6000",
+        "6000",
+        "12000"
+      ],
+      "derivation": {
+        "below6000": "前月銀行合格新增店外一般消費未滿6000；排除Costco、保費、儲值、超商／全聯、繳費及其他官方非一般消費。",
+        "6000": "前月銀行合格新增店外一般消費滿6000未滿12000；分期於首期認列總本金，以消費日為準。",
+        "12000": "前月銀行合格新增店外一般消費滿12000；並非當月累積、非帳本總額；完整排除依原文。"
+      }
+    },
+    {
+      "id": "fubon_autopay",
+      "kind": "flag",
+      "source": "userDeclared",
+      "label": "本人富邦存款帳戶扣繳本人正附卡帳款，設定成功次一營業日生效且2026年底前完成",
+      "history": true
+    },
+    {
+      "id": "fubon_autopay_at_grant",
+      "kind": "flag",
+      "source": "userDeclared",
+      "label": "回饋發放時仍維持上述本人富邦帳戶自扣服務",
+      "history": true
+    }
+  ],
+  "rules": [
+    {
+      "id": "costco.outside",
+      "layer": "L1",
+      "kind": "base",
+      "group": "costco.main",
+      "period": {
+        "from": "2026-10-24T00:00:00+08:00",
+        "to": "2027-12-31T23:59:59.999999+08:00"
+      },
+      "when": {
+        "all": [
+          {
+            "selector": {
+              "costco_member": true
+            }
+          },
+          {
+            "route": {
+              "funding": [
+                "creditCard"
+              ]
+            }
+          },
+          {
+            "issuerDecision": "銀行認列為台灣Costco店內及線上以外之交易（含UberEats好市多專區），非特殊專案；有效卡、無逾期並符合回饋資格"
+          }
+        ]
+      },
+      "rate": {
+        "type": "fixed",
+        "percent": "1"
+      },
+      "includesBase": true,
+      "unit": "costco_gold",
+      "rounding": {
+        "mode": "halfUp",
+        "basis": "perTransaction"
+      },
+      "combinable": {
+        "with": [
+          "costco.main",
+          "costco.ubereats",
+          "costco.rail"
+        ]
+      },
+      "evidenceRefs": [
+        "costco.page#basic",
+        "costco.pdf#basic",
+        "costco.pdf#outside",
+        "costco.pdf#rounding",
+        "costco.pdf#member"
+      ],
+      "notes": "三類銀行認列互斥；不以含Costco字樣推定通路。基本權益僅自保存核對日2026-10-24建模，不將草稿2024-09-01分期排除起日誤作一般權益起日。"
+    },
+    {
+      "id": "costco.instore",
+      "layer": "L1",
+      "kind": "base",
+      "group": "costco.main",
+      "period": {
+        "from": "2026-10-24T00:00:00+08:00",
+        "to": "2027-12-31T23:59:59.999999+08:00"
+      },
+      "when": {
+        "all": [
+          {
+            "selector": {
+              "costco_member": true
+            }
+          },
+          {
+            "route": {
+              "funding": [
+                "creditCard"
+              ]
+            }
+          },
+          {
+            "country": "TW"
+          },
+          {
+            "presence": "inPerson"
+          },
+          {
+            "issuerDecision": "銀行認列為全台Costco實體店內消費，非UberEats／境外Costco／特殊專案；有效卡、無逾期並符合回饋資格"
+          }
+        ]
+      },
+      "rate": {
+        "type": "fixed",
+        "percent": "2"
+      },
+      "includesBase": true,
+      "unit": "costco_gold",
+      "rounding": {
+        "mode": "halfUp",
+        "basis": "perTransaction"
+      },
+      "combinable": {
+        "with": [
+          "costco.main",
+          "costco.ubereats",
+          "costco.rail"
+        ]
+      },
+      "evidenceRefs": [
+        "costco.page#basic",
+        "costco.pdf#basic",
+        "costco.pdf#outside",
+        "costco.pdf#rounding",
+        "costco.pdf#member"
+      ],
+      "notes": "三類銀行認列互斥；不以含Costco字樣推定通路。基本權益僅自保存核對日2026-10-24建模，不將草稿2024-09-01分期排除起日誤作一般權益起日。"
+    },
+    {
+      "id": "costco.online",
+      "layer": "L1",
+      "kind": "base",
+      "group": "costco.main",
+      "period": {
+        "from": "2026-10-24T00:00:00+08:00",
+        "to": "2027-12-31T23:59:59.999999+08:00"
+      },
+      "when": {
+        "all": [
+          {
+            "selector": {
+              "costco_member": true
+            }
+          },
+          {
+            "route": {
+              "funding": [
+                "creditCard"
+              ]
+            }
+          },
+          {
+            "country": "TW"
+          },
+          {
+            "presence": "online"
+          },
+          {
+            "issuerDecision": "銀行認列為台灣Costco線上購物，非UberEats／其他電商／境外Costco／特殊專案；有效卡、無逾期並符合回饋資格"
+          }
+        ]
+      },
+      "rate": {
+        "type": "fixed",
+        "percent": "3"
+      },
+      "includesBase": true,
+      "unit": "costco_gold",
+      "rounding": {
+        "mode": "halfUp",
+        "basis": "perTransaction"
+      },
+      "combinable": {
+        "with": [
+          "costco.main",
+          "costco.ubereats",
+          "costco.rail"
+        ]
+      },
+      "evidenceRefs": [
+        "costco.page#basic",
+        "costco.pdf#basic",
+        "costco.pdf#outside",
+        "costco.pdf#rounding",
+        "costco.pdf#member"
+      ],
+      "notes": "三類銀行認列互斥；不以含Costco字樣推定通路。基本權益僅自保存核對日2026-10-24建模，不將草稿2024-09-01分期排除起日誤作一般權益起日。"
+    },
+    {
+      "id": "costco.ubereats.bonus",
+      "layer": "L1",
+      "kind": "bonus",
+      "group": "costco.ubereats",
+      "period": {
+        "from": "2026-07-01T00:00:00+08:00",
+        "to": "2026-12-31T23:59:59.999999+08:00"
+      },
+      "when": {
+        "all": [
+          {
+            "selector": {
+              "costco_member": true
+            }
+          },
+          {
+            "route": {
+              "funding": [
+                "creditCard"
+              ]
+            }
+          },
+          {
+            "route": {
+              "platform": [
+                "direct"
+              ],
+              "funding": [
+                "creditCard"
+              ]
+            }
+          },
+          {
+            "merchantIn": "ubereats_costco_zone"
+          },
+          {
+            "issuerDecision": "銀行認列優步－Ｃｏｓｔｃｏ或指定特店代號；消費日與授權日為同一台北日期，次月15日23:59前請款，無失敗／退貨／負向消費，回饋時有效卡無逾期"
+          }
+        ]
+      },
+      "rate": {
+        "type": "fixed",
+        "percent": "1"
+      },
+      "includesBase": false,
+      "unit": "costco_gold",
+      "rounding": {
+        "mode": "halfUp",
+        "basis": "monthlyAggregate",
+        "scope": "primaryAndSupplementary"
+      },
+      "combinable": {
+        "with": [
+          "costco.main",
+          "costco.ubereats",
+          "costco.rail"
+        ]
+      },
+      "evidenceRefs": [
+        "costco.page#ubereats",
+        "costco.page#uberMonth",
+        "costco.page#uberClaim",
+        "costco.page#uberName",
+        "costco.page#uberThirdParty",
+        "costco.pdf#member"
+      ],
+      "notes": "原權益1%逐筆取整與加碼1%正附卡每月合計後取整分開；無上限，次次月底起回饋。日期不一致或請款未知不能確定加碼；不是將2%逐筆取整。"
+    },
+    {
+      "id": "costco.rail.bonus",
+      "layer": "L1",
+      "kind": "bonus",
+      "group": "costco.rail",
+      "period": {
+        "from": "2026-01-01T00:00:00+08:00",
+        "to": "2026-12-31T23:59:59.999999+08:00"
+      },
+      "when": {
+        "all": [
+          {
+            "selector": {
+              "costco_member": true
+            }
+          },
+          {
+            "route": {
+              "funding": [
+                "creditCard"
+              ]
+            }
+          },
+          {
+            "merchantIn": "thsr_tra_ticket"
+          },
+          {
+            "spendType": [
+              "general",
+              "installment"
+            ]
+          },
+          {
+            "selector": {
+              "costco_prev_month_outside_spend": [
+                "6000",
+                "12000"
+              ]
+            }
+          },
+          {
+            "any": [
+              {
+                "selector": {
+                  "fubon_autopay": false
+                }
+              },
+              {
+                "selector": {
+                  "fubon_autopay_at_grant": true
+                }
+              }
+            ]
+          },
+          {
+            "issuerDecision": "銀行認列高鐵／臺鐵官方網站、App、臨櫃、自動售票機購票，排除回數票／定期票App續購、車廂升等、列車補票及悠遊卡加值；消費日與授權日同一台北日期，回饋時有效卡、前期無逾期，交易未取消退款"
+          }
+        ]
+      },
+      "rate": {
+        "type": "bySelectors",
+        "selectors": [
+          "costco_variant",
+          "costco_prev_month_outside_spend",
+          "fubon_autopay"
+        ],
+        "table": {
+          "world|6000|false": "2",
+          "world|12000|false": "3",
+          "world|6000|true": "5",
+          "world|12000|true": "7",
+          "titanium_business|6000|false": "1",
+          "titanium_business|12000|false": "2",
+          "titanium_business|6000|true": "3",
+          "titanium_business|12000|true": "5",
+          "titanium|6000|false": "1",
+          "titanium|12000|false": "2",
+          "titanium|6000|true": "3",
+          "titanium|12000|true": "5"
+        }
+      },
+      "includesBase": false,
+      "unit": "fubon_card_credit",
+      "rounding": {
+        "mode": "halfUp",
+        "basis": "monthlyAggregate",
+        "scope": "household"
+      },
+      "combinable": {
+        "with": [
+          "costco.main",
+          "costco.ubereats",
+          "costco.rail"
+        ]
+      },
+      "evidenceRefs": [
+        "costco.page#rail",
+        "costco.page#railTable",
+        "costco.page#railMonth",
+        "costco.page#railRegistration",
+        "costco.page#railAutopay",
+        "costco.page#railGrant",
+        "costco.page#railChannel",
+        "costco.page#railTra",
+        "costco.page#railPrevious",
+        "costco.pdf#member"
+      ],
+      "notes": "表列總回饋減原權益1%為刷卡金差額；好多金及刷卡金不相加。每戶每月擇優合計取整，次次月底起撥正卡帳戶；分期不給原權益1%，加碼另依銀行購票認列。自扣欄高比例須回饋時仍有效，非自扣欄不要求自扣資格。",
+      "caps": [
+        {
+          "measure": "reward",
+          "amount": "550",
+          "per": "calendarMonth",
+          "scope": "household",
+          "overflowRule": null,
+          "when": {
+            "selector": {
+              "costco_variant": "world"
+            }
+          }
+        },
+        {
+          "measure": "reward",
+          "amount": "450",
+          "per": "calendarMonth",
+          "scope": "household",
+          "overflowRule": null,
+          "when": {
+            "selector": {
+              "costco_variant": [
+                "titanium_business",
+                "titanium"
+              ]
+            }
+          }
+        }
+      ],
+      "requires": [
+        {
+          "id": "costco.rail.registration",
+          "label": "購票當月月底前完成正卡人登錄且銀行確認成功（每月重新登錄）",
+          "per": "calendarMonth",
+          "deadline": "monthLastDay",
+          "quota": "unknown",
+          "source": "userDeclared"
+        }
+      ]
+    },
+    {
+      "id": "costco.uncovered.insurance",
+      "layer": "L1",
+      "kind": "bonus",
+      "group": "costco.uncovered",
+      "status": "uncovered",
+      "notes": "保費0.5%好多金／最高12期零利率特殊專案，依使用者決定先列未涵蓋；需結帳前最後設定等條件，一般回饋排除不代表整卡保費確定零。"
+    },
+    {
+      "id": "costco.uncovered.overseas",
+      "layer": "L1",
+      "kind": "bonus",
+      "group": "costco.uncovered",
+      "status": "uncovered",
+      "notes": "精選海外旅遊加碼未建模；一般店外1%不是所有活動回饋的上限。"
+    },
+    {
+      "id": "costco.uncovered.mastercard",
+      "layer": "L1",
+      "kind": "bonus",
+      "group": "costco.uncovered",
+      "status": "uncovered",
+      "notes": "Mastercard海外平台及其他平台優惠未建模，資格與活動另依原文。"
+    },
+    {
+      "id": "costco.uncovered.newCard",
+      "layer": "L1",
+      "kind": "bonus",
+      "group": "costco.uncovered",
+      "status": "uncovered",
+      "notes": "新戶好禮未建模，核卡／首刷／名額及贈品不得當現金回饋。"
+    },
+    {
+      "id": "costco.uncovered.installmentSpecial",
+      "layer": "L1",
+      "kind": "bonus",
+      "group": "costco.uncovered",
+      "status": "uncovered",
+      "notes": "特約商店分期特殊專案未涵蓋；一般權益自2024-09-01排除，不推論所有專案零回饋。"
+    },
+    {
+      "id": "costco.uncovered.gasBonus",
+      "layer": "L1",
+      "kind": "bonus",
+      "group": "costco.uncovered",
+      "status": "uncovered",
+      "notes": "好市多自助加油加碼及帳單週期上限未涵蓋；不把基本權益當整體最高回饋。"
+    }
+  ],
+  "exclusions": [
+    {
+      "id": "costco.ex.types",
+      "appliesTo": [
+        "costco.outside",
+        "costco.instore",
+        "costco.online",
+        "costco.ubereats.bonus"
+      ],
+      "when": {
+        "spendType": [
+          "insurance",
+          "installment",
+          "storedValue",
+          "topup",
+          "cashAdvance",
+          "tuition",
+          "government",
+          "tax",
+          "medical",
+          "utility",
+          "fee"
+        ]
+      },
+      "effect": "zero",
+      "evidenceRefs": [
+        "costco.page#basic",
+        "costco.pdf#excluded",
+        "costco.pdf#installment",
+        "costco.pdf#fee"
+      ]
+    },
+    {
+      "id": "costco.ex.convenience",
+      "appliesTo": [
+        "costco.outside",
+        "costco.instore",
+        "costco.online",
+        "costco.ubereats.bonus"
+      ],
+      "when": {
+        "merchantIn": "fubon_convenience"
+      },
+      "effect": "zero",
+      "evidenceRefs": [
+        "costco.page#basic",
+        "costco.pdf#convenience"
+      ]
+    },
+    {
+      "id": "costco.ex.pxgroup",
+      "appliesTo": [
+        "costco.outside",
+        "costco.instore",
+        "costco.online",
+        "costco.ubereats.bonus"
+      ],
+      "when": {
+        "merchantIn": "fubon_pxgroup"
+      },
+      "effect": "zero",
+      "evidenceRefs": [
+        "costco.page#basic",
+        "costco.pdf#pxgroup"
+      ]
+    },
+    {
+      "id": "costco.ex.other",
+      "appliesTo": [
+        "costco.outside",
+        "costco.instore",
+        "costco.online",
+        "costco.ubereats.bonus"
+      ],
+      "when": {
+        "issuerDecision": "是否屬基金申購／代扣、境外投資（含eToro、換匯、虛擬貨幣）、博奕、聯卡小額支付平台、醫指付及繳稅費／公務繳費平台、電信／路邊停車等費用、各項利息手續費或其他銀行公告非一般消費"
+      },
+      "effect": "zero",
+      "evidenceRefs": [
+        "costco.page#basic",
+        "costco.pdf#investment",
+        "costco.pdf#gambling",
+        "costco.pdf#micropay",
+        "costco.pdf#platforms",
+        "costco.pdf#utility",
+        "costco.pdf#fee",
+        "costco.pdf#excluded"
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "id": "costco.page",
+      "sourceCard": "fubon_costco",
+      "url": "https://www.fubon.com/banking/personal/credit_card/all_card/costco/costco.htm",
+      "role": "primary",
+      "format": "html",
+      "approvedSha256": "7ae12912974831755639a91a1036b74c717442cb721f5104c47d24d8dc10c599",
+      "anchors": {
+        "basic": {
+          "pointer": "/text",
+          "contains": "Costco 線上購物"
+        },
+        "insurance": {
+          "pointer": "/text",
+          "contains": "保費消費優惠2選1"
+        },
+        "ubereats": {
+          "pointer": "/text",
+          "contains": "2%回饋=原權益1%無上限+本活動加碼1%無上限"
+        },
+        "uberMonth": {
+          "pointer": "/text",
+          "contains": "每月符合回饋資格之刷卡消費金額合計採四捨五入法計算加碼1%好多金"
+        },
+        "uberClaim": {
+          "pointer": "/text",
+          "contains": "且廠商須於活動期間次月15日23:59前請款"
+        },
+        "uberName": {
+          "pointer": "/text",
+          "contains": "優步－Ｃｏｓｔｃｏ"
+        },
+        "uberThirdParty": {
+          "pointer": "/text",
+          "contains": "使用第三方支付之交易不適用本加碼活動回饋"
+        },
+        "rail": {
+          "pointer": "/text",
+          "contains": "最高享8%回饋(每月需登錄，加碼回饋擇優提供，回饋含原權益1%)"
+        },
+        "railTable": {
+          "pointer": "/text",
+          "contains": "世界卡 6,000 3% 6% 550元 12,000 4% 8% 鈦商/鈦金卡 6,000 2% 4% 450元 12,000 3% 6%"
+        },
+        "railMonth": {
+          "pointer": "/text",
+          "contains": "以當月消費總額 * 回饋率四捨五入計算至整數位"
+        },
+        "railRegistration": {
+          "pointer": "/text",
+          "contains": "每月最後一日 ( 含 ) 前完成登錄"
+        },
+        "railAutopay": {
+          "pointer": "/text",
+          "contains": "限以正卡持卡人本人之台北富邦銀行存款帳戶"
+        },
+        "railGrant": {
+          "pointer": "/text",
+          "contains": "如中途取消 台北富邦銀行 帳戶自動扣繳本行信用卡費服務則不符合本活動資格"
+        },
+        "railChannel": {
+          "pointer": "/text",
+          "contains": "高鐵回數票、定期票手機 APP 續購、車廂升等手續費、高鐵列車補票不列入回饋計算"
+        },
+        "railTra": {
+          "pointer": "/text",
+          "contains": "悠遊卡自動加值、臺鐵列車補票不列入回饋計算"
+        },
+        "railPrevious": {
+          "pointer": "/text",
+          "contains": "本活動累積店外一般消費金額以「消費日」為準，分期消費於首期認列總分期金額"
+        }
+      },
+      "approval": {
+        "by": "S4 migration of existing approved saved snapshots",
+        "at": "2026-10-24T18:30:00+08:00",
+        "note": "沿用既有核准，並非新增或更新核准；HTML正規化／PDF原檔指紋由離線測試核對。"
+      }
+    },
+    {
+      "id": "costco.pdf",
+      "sourceCard": "fubon_costco",
+      "url": "https://www.fubon.com/banking/document/form/TW/%E5%A5%BD%E5%A4%9A%E9%87%91%E5%9B%9E%E9%A5%8B%E8%BE%A6%E6%B3%95.pdf",
+      "role": "supporting",
+      "format": "pdf",
+      "approvedSha256": "94804f884816567ee21f3fe01e67fd1131f3f28cb263d322d5ee4b6a3d696d12",
+      "anchors": {
+        "member": {
+          "pointer": "/text",
+          "contains": "喪失 Costco 有效會員資格"
+        },
+        "basic": {
+          "pointer": "/text",
+          "contains": "之 2%回饋、Costco 線上購物之消費適用單筆消費金額之 3%回饋"
+        },
+        "outside": {
+          "pointer": "/text",
+          "contains": "般消費適用單筆消費金額之 1%回饋"
+        },
+        "rounding": {
+          "pointer": "/text",
+          "contains": "採四捨五入計算至個位數"
+        },
+        "excluded": {
+          "pointer": "/text",
+          "contains": "不包含保費"
+        },
+        "investment": {
+          "pointer": "/text",
+          "contains": "資交易(含換匯、虛擬貨幣等)"
+        },
+        "gambling": {
+          "pointer": "/text",
+          "contains": "博奕類款項"
+        },
+        "micropay": {
+          "pointer": "/text",
+          "contains": "聯合信用卡中心小額支付平台特約商店"
+        },
+        "platforms": {
+          "pointer": "/text",
+          "contains": "稅款、各醫療院所費用、醫指付、電子化繳稅費平台"
+        },
+        "utility": {
+          "pointer": "/text",
+          "contains": "水費、電費、瓦斯費、電信費、路邊停車費"
+        },
+        "convenience": {
+          "pointer": "/text",
+          "contains": "定該便利商店各行動支付，如 icashPay、全盈+Pay 及 LINE PAY 等)"
+        },
+        "pxgroup": {
+          "pointer": "/text",
+          "contains": "Px pay、全支付等。)"
+        },
+        "installment": {
+          "pointer": "/text",
+          "contains": "自 2024/9/1 起不適用於本活動"
+        },
+        "special": {
+          "pointer": "/text",
+          "contains": "惟若有特殊專案回饋"
+        },
+        "fee": {
+          "pointer": "/text",
+          "contains": "循環息、分期利息、遲延利息、違約金"
+        },
+        "redeem": {
+          "pointer": "/text",
+          "contains": "不含 MyCharge 電動車充電站"
+        },
+        "reset": {
+          "pointer": "/text",
+          "contains": "於每年 3 月 31 日"
+        }
+      },
+      "approval": {
+        "by": "S4 migration of existing approved saved snapshots",
+        "at": "2026-10-24T18:30:00+08:00",
+        "note": "沿用既有核准，並非新增或更新核准；HTML正規化／PDF原檔指紋由離線測試核對。"
+      }
+    }
+  ]
+}

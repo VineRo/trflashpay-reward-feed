@@ -124,6 +124,12 @@ def cube_fixed_domestic(source, now):
     if any(term not in text for term in ['每筆消費請款入帳後', '小數點第一位四捨五入至整數位',
         '依該筆消費之授權日判斷適用權益方案', '信用額度', '50萬元', '不含CUBE簽帳金融卡']):
         raise ValueError('Missing CUBE recognition or calculation conditions')
+    # Cross-check the fixed-plan examples, rather than borrowing a rate or
+    # rounding sentence from an unrelated tier/coupon elsewhere on the page.
+    sample_rate = float(consistent(r'LINEPAY-屈臣氏NT\$200一般消費\(不含保費\)([0-9.]+)%2\(200\*1\.2%=2\.4\)', text))
+    if value != sample_rate or sample_rate != 1.2 or any(term not in text for term in [
+        'LINEPAY-7-11NT$100非一般消費0%0', '不得再切換至其他權益', '便利超商消費']):
+        raise ValueError('Fixed-plan examples or exclusions do not match the reviewed scope')
     rule = ordinary_observation('cathay_cube', '國泰 CUBE 信用卡（固定回饋國內基本方案）', '國泰世華銀行', source,
         value, expiry, ['僅固定回饋方案之國內一般消費，不含保費及分期',
         '依授權日生效方案及銀行一般消費排除清單', '指定通路、海外及優惠券尚未納入',

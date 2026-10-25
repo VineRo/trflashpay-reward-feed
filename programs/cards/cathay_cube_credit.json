@@ -1,0 +1,3197 @@
+{
+  "id": "cathay_cube_credit",
+  "issuer": "cathay",
+  "name": "國泰世華 CUBE 信用卡",
+  "rewardUnit": "cube_points",
+  "notCovering": [
+    "CUBE 簽帳金融卡（不同條款，另一個計畫）",
+    "CUBE App 優惠券、首刷禮、權益套餐與退貨扣回",
+    "秋日遊、慶生月、童樂匯、台塑家各類別保留 uncovered；不得由一般 0.3% 推論未建模之指定回饋。",
+    "私人資格、有效卡與無逾期、銀行認列與剩餘月額度由呼叫端確認；未從公開網頁推定。",
+    "趣旅行 Apple 錢包交通卡 SUICA／PASMO／ICOCA 儲值例外未建模；不得把 Apple Pay 消費等同交通卡儲值。"
+  ],
+  "selectors": [
+    {
+      "id": "cube_plan",
+      "kind": "plan",
+      "source": "userDeclared",
+      "label": "消費授權日當天生效的 CUBE 權益方案",
+      "values": [
+        "digital",
+        "dining_shopping",
+        "travel",
+        "select",
+        "formosa",
+        "pxpay",
+        "autumn_japan",
+        "birthday",
+        "kids",
+        "fixed"
+      ],
+      "history": true,
+      "effective": {
+        "rule": "sameDayMidnight",
+        "basis": "authorizationDate"
+      },
+      "switching": {
+        "default": {
+          "maxPerDay": 1
+        },
+        "fixed": {
+          "window": {
+            "from": "2026-08-03",
+            "to": "2026-12-31"
+          },
+          "oneTimeRight": "switchInOrOutOnce",
+          "lockedUntil": "2026-12-31",
+          "autoSwitch": [
+            {
+              "at": "2027-01-01T00:00:00+08:00",
+              "to": "dining_shopping",
+              "condition": "fixedNotOfferedIn2027"
+            }
+          ]
+        }
+      },
+      "appliesToSupplementary": "followsPrimary"
+    },
+    {
+      "id": "cube_level",
+      "kind": "tier",
+      "source": "userDeclared",
+      "label": "本月生效的 CUBE 權益等級",
+      "values": [
+        "L1",
+        "L2",
+        "L3"
+      ],
+      "history": true,
+      "effective": {
+        "rule": "nextMonthFirstDay"
+      },
+      "derivation": {
+        "L2": "本人國泰帳戶自動扣繳本人卡費，或當月以 CUBE App 用本人國泰帳戶繳卡費（月底前 3 個工作日前）",
+        "L3": "財富管理貴賓（近 3 個月平均資產 NT$300 萬以上），成為貴賓次月升級"
+      }
+    }
+  ],
+  "rules": [
+    {
+      "id": "cube.fixed.domestic",
+      "layer": "L1",
+      "kind": "bonus",
+      "group": "cube.main",
+      "period": {
+        "from": "2026-08-03T00:00:00+08:00",
+        "to": "2026-12-31T23:59:59.999999+08:00"
+      },
+      "when": {
+        "all": [
+          {
+            "selector": {
+              "cube_plan": "fixed"
+            }
+          },
+          {
+            "route": {
+              "funding": [
+                "creditCard"
+              ]
+            }
+          },
+          {
+            "spendType": "general"
+          },
+          {
+            "not": {
+              "spendType": [
+                "insurance",
+                "installment"
+              ]
+            }
+          },
+          {
+            "country": "TW"
+          },
+          {
+            "currency": "TWD"
+          }
+        ]
+      },
+      "rate": {
+        "type": "fixed",
+        "percent": "1.2"
+      },
+      "includesBase": true,
+      "unit": "cube_points",
+      "rounding": {
+        "mode": "halfUp",
+        "basis": "perTransaction"
+      },
+      "caps": [
+        {
+          "measure": "spend",
+          "amount": "creditLimit+500000",
+          "per": "calendarMonth",
+          "scope": "primaryAndSupplementary",
+          "overflowRule": "cube.general"
+        }
+      ],
+      "combinable": {
+        "default": "unknown"
+      },
+      "notes": "官方範例：LINE PAY-屈臣氏 NT$200 得 2 點；保費與分期不在本規則（另由一般保費／特店分期規則計算）",
+      "evidenceRefs": [
+        "cube.s1#fixed_rules",
+        "cube.s1#rounding",
+        "cube.s1#monthly_cap",
+        "cube.s2#fixed_domestic",
+        "cube.s3#point_terms"
+      ]
+    },
+    {
+      "id": "cube.fixed.overseasPhysical",
+      "layer": "L1",
+      "kind": "bonus",
+      "group": "cube.main",
+      "period": {
+        "from": "2026-08-03T00:00:00+08:00",
+        "to": "2026-12-31T23:59:59.999999+08:00"
+      },
+      "when": {
+        "all": [
+          {
+            "selector": {
+              "cube_plan": "fixed"
+            }
+          },
+          {
+            "any": [
+              {
+                "not": {
+                  "country": "TW"
+                }
+              },
+              {
+                "not": {
+                  "currency": "TWD"
+                }
+              }
+            ]
+          },
+          {
+            "presence": "inPerson"
+          },
+          {
+            "route": {
+              "platform": [
+                "direct",
+                "applePay",
+                "samsungPay",
+                "googlePay",
+                "garminPay"
+              ],
+              "funding": [
+                "creditCard"
+              ]
+            }
+          },
+          {
+            "spendType": "general"
+          },
+          {
+            "not": {
+              "spendType": [
+                "storedValue",
+                "topup",
+                "installment"
+              ]
+            }
+          }
+        ]
+      },
+      "rate": {
+        "type": "fixed",
+        "percent": "2.5"
+      },
+      "includesBase": true,
+      "unit": "cube_points",
+      "rounding": {
+        "mode": "halfUp",
+        "basis": "perTransaction"
+      },
+      "caps": [
+        {
+          "measure": "spend",
+          "amount": "creditLimit+500000",
+          "per": "calendarMonth",
+          "scope": "primaryAndSupplementary",
+          "overflowRule": "cube.general"
+        }
+      ],
+      "combinable": {
+        "default": "unknown"
+      },
+      "notes": "國別非臺灣或幣別非臺幣（任一成立）、面對面過卡或感應、一般消費；儲值、醫療、博奕、飛機／郵輪上消費與未核准境外投資平台排除",
+      "evidenceRefs": [
+        "cube.s1#overseas_definition",
+        "cube.s1#rounding",
+        "cube.s1#monthly_cap",
+        "cube.s2#fixed_overseas",
+        "cube.s3#point_terms"
+      ]
+    },
+    {
+      "id": "cube.coupons",
+      "layer": "L1",
+      "kind": "bonus",
+      "group": "cube.coupon",
+      "status": "uncovered",
+      "notes": "CUBE App 優惠券需領取、自領取日起算、各券分別取整，尚未逐券建模"
+    },
+    {
+      "id": "cube.general",
+      "layer": "L1",
+      "kind": "base",
+      "group": "cube.main",
+      "period": {
+        "from": "2026-01-01T00:00:00+08:00",
+        "to": "2026-12-31T23:59:59.999999+08:00"
+      },
+      "when": {
+        "all": [
+          {
+            "route": {
+              "funding": [
+                "creditCard"
+              ]
+            }
+          },
+          {
+            "spendType": "general"
+          },
+          {
+            "not": {
+              "selector": {
+                "cube_plan": "fixed"
+              }
+            }
+          }
+        ]
+      },
+      "rate": {
+        "type": "fixed",
+        "percent": "0.3"
+      },
+      "includesBase": true,
+      "unit": "cube_points",
+      "rounding": {
+        "mode": "halfUp",
+        "basis": "perTransaction"
+      },
+      "combinable": {
+        "default": "unknown"
+      },
+      "evidenceRefs": [
+        "cube.s1#general",
+        "cube.s1#rounding",
+        "cube.s1#monthly_cap",
+        "cube.s2#fixed_domestic",
+        "cube.s3#point_terms"
+      ]
+    },
+    {
+      "id": "cube.insurance",
+      "layer": "L1",
+      "kind": "base",
+      "group": "cube.main",
+      "period": {
+        "from": "2026-01-01T00:00:00+08:00",
+        "to": "2026-12-31T23:59:59.999999+08:00"
+      },
+      "when": {
+        "all": [
+          {
+            "route": {
+              "funding": [
+                "creditCard"
+              ]
+            }
+          },
+          {
+            "spendType": "insurance"
+          }
+        ]
+      },
+      "rate": {
+        "type": "fixed",
+        "percent": "0.3"
+      },
+      "includesBase": true,
+      "unit": "cube_points",
+      "rounding": {
+        "mode": "halfUp",
+        "basis": "perTransaction"
+      },
+      "combinable": {
+        "default": "unknown"
+      },
+      "evidenceRefs": [
+        "cube.s1#general",
+        "cube.s1#rounding",
+        "cube.s1#monthly_cap",
+        "cube.s2#fixed_domestic",
+        "cube.s3#point_terms"
+      ],
+      "notes": "保費僅 0.3%；國壽躉繳、投資型、利率變動型年金排除。"
+    },
+    {
+      "id": "cube.installment",
+      "layer": "L1",
+      "kind": "base",
+      "group": "cube.main",
+      "period": {
+        "from": "2026-01-01T00:00:00+08:00",
+        "to": "2026-12-31T23:59:59.999999+08:00"
+      },
+      "when": {
+        "all": [
+          {
+            "route": {
+              "funding": [
+                "creditCard"
+              ]
+            }
+          },
+          {
+            "spendType": "installment"
+          }
+        ]
+      },
+      "rate": {
+        "type": "fixed",
+        "percent": "0.3"
+      },
+      "includesBase": true,
+      "unit": "cube_points",
+      "rounding": {
+        "mode": "halfUp",
+        "basis": "perTransaction"
+      },
+      "combinable": {
+        "default": "unknown"
+      },
+      "evidenceRefs": [
+        "cube.s1#general",
+        "cube.s1#rounding",
+        "cube.s1#monthly_cap",
+        "cube.s2#fixed_domestic",
+        "cube.s3#point_terms"
+      ],
+      "notes": "僅合格一般消費之特約商店分期（含提前結清）；金額為本期入帳期金，非帳單分期／刷卡樂分期。每期入帳後回饋。"
+    },
+    {
+      "id": "cube.autumn_japan.c0",
+      "layer": "L1",
+      "kind": "bonus",
+      "group": "cube.main",
+      "status": "uncovered",
+      "notes": "秋日遊 日本必逛＋遊日必備之指定消費 3.5%；2026/10/1~2026/11/30  ；指定門市、品項、私人資格／生日月或特殊支付例外無結構化欄位，維持 uncovered，不推定適用。"
+    },
+    {
+      "id": "cube.autumn_japan.c1",
+      "layer": "L1",
+      "kind": "bonus",
+      "group": "cube.main",
+      "status": "uncovered",
+      "notes": "秋日遊 日本四大機場指定免稅店 4%；2026/10/1~2026/11/30  ；指定門市、品項、私人資格／生日月或特殊支付例外無結構化欄位，維持 uncovered，不推定適用。"
+    },
+    {
+      "id": "cube.autumn_japan.c2",
+      "layer": "L1",
+      "kind": "bonus",
+      "group": "cube.main",
+      "status": "uncovered",
+      "notes": "秋日遊 日本IP專賣店 / 人氣愛店 / 餐廳預約平台  5%；2026/10/1~2026/11/30  ；指定門市、品項、私人資格／生日月或特殊支付例外無結構化欄位，維持 uncovered，不推定適用。"
+    },
+    {
+      "id": "cube.autumn_japan.c3",
+      "layer": "L1",
+      "kind": "bonus",
+      "group": "cube.main",
+      "status": "uncovered",
+      "notes": "秋日遊 海外旅遊規劃 ( 機票、訂房、行程) 3~5%；2026/10/1~2026/11/30  ；指定門市、品項、私人資格／生日月或特殊支付例外無結構化欄位，維持 uncovered，不推定適用。"
+    },
+    {
+      "id": "cube.autumn_japan.c4",
+      "layer": "L1",
+      "kind": "bonus",
+      "group": "cube.main",
+      "status": "uncovered",
+      "notes": "秋日遊 國內日系質感飯店 5%；2026/10/1~2026/11/30  ；指定門市、品項、私人資格／生日月或特殊支付例外無結構化欄位，維持 uncovered，不推定適用。"
+    },
+    {
+      "id": "cube.autumn_japan.c5",
+      "layer": "L1",
+      "kind": "bonus",
+      "group": "cube.main",
+      "status": "uncovered",
+      "notes": "秋日遊 國內日系購物名店 3~8%；2026/10/1~2026/11/30  ；指定門市、品項、私人資格／生日月或特殊支付例外無結構化欄位，維持 uncovered，不推定適用。"
+    },
+    {
+      "id": "cube.autumn_japan.c6",
+      "layer": "L1",
+      "kind": "bonus",
+      "group": "cube.main",
+      "status": "uncovered",
+      "notes": "秋日遊 國內日系美食饗宴 3.5~8%；2026/10/1~2026/11/30  ；指定門市、品項、私人資格／生日月或特殊支付例外無結構化欄位，維持 uncovered，不推定適用。"
+    },
+    {
+      "id": "cube.formosa.c0",
+      "layer": "L1",
+      "kind": "bonus",
+      "group": "cube.main",
+      "status": "uncovered",
+      "notes": "台塑家 加油站；2026/6/1~2026/12/31  ；指定門市、品項、私人資格／生日月或特殊支付例外無結構化欄位，維持 uncovered，不推定適用。"
+    },
+    {
+      "id": "cube.formosa.c1",
+      "layer": "L1",
+      "kind": "bonus",
+      "group": "cube.main",
+      "status": "uncovered",
+      "notes": "台塑家 健康生活；2026/6/1~2026/12/31  ；指定門市、品項、私人資格／生日月或特殊支付例外無結構化欄位，維持 uncovered，不推定適用。"
+    },
+    {
+      "id": "cube.formosa.c2",
+      "layer": "L1",
+      "kind": "bonus",
+      "group": "cube.main",
+      "status": "uncovered",
+      "notes": "台塑家 指定超商；2026/6/1~2026/12/31  ；指定門市、品項、私人資格／生日月或特殊支付例外無結構化欄位，維持 uncovered，不推定適用。"
+    },
+    {
+      "id": "cube.pxpay.supermarket",
+      "layer": "L1",
+      "kind": "bonus",
+      "group": "cube.main",
+      "period": {
+        "from": "2026-04-22T00:00:00+08:00",
+        "to": "2026-12-31T23:59:59.999999+08:00"
+      },
+      "when": {
+        "all": [
+          {
+            "selector": {
+              "cube_plan": "pxpay"
+            }
+          },
+          {
+            "merchantIn": "cube_pxpay_supermarket"
+          },
+          {
+            "route": {
+              "platform": [
+                "pxPlus"
+              ],
+              "funding": [
+                "creditCard"
+              ]
+            }
+          },
+          {
+            "spendType": "general"
+          },
+          {
+            "country": "TW"
+          },
+          {
+            "issuerDecision": "全支付「量販超市」：銀行認列符合該類別及個別商戶完整限制（請款特店、指定門市／官方通路、品項、第三方收單排除），且依個別方案明列例外檢查一般消費及小樹點累積辦法排除；不由品牌命中推定。"
+          },
+          {
+            "currency": "TWD"
+          }
+        ]
+      },
+      "rate": {
+        "type": "fixed",
+        "percent": "2"
+      },
+      "includesBase": true,
+      "unit": "cube_points",
+      "rounding": {
+        "mode": "halfUp",
+        "basis": "perTransaction"
+      },
+      "combinable": {
+        "default": "unknown"
+      },
+      "evidenceRefs": [
+        "cube.s1#general",
+        "cube.s1#routes",
+        "cube.s1#rounding",
+        "cube.s1#monthly_cap",
+        "cube.s1#levels",
+        "cube.s2#pxpay_supermarket",
+        "cube.s2#pxpay_title",
+        "cube.s2#pxpay_notice",
+        "cube.s3#point_terms"
+      ],
+      "caps": [
+        {
+          "measure": "spend",
+          "amount": "creditLimit+500000",
+          "per": "calendarMonth",
+          "scope": "primaryAndSupplementary",
+          "overflowRule": "cube.general"
+        }
+      ]
+    },
+    {
+      "id": "cube.pxpay.partners",
+      "layer": "L1",
+      "kind": "bonus",
+      "group": "cube.main",
+      "period": {
+        "from": "2026-04-22T00:00:00+08:00",
+        "to": "2026-12-31T23:59:59.999999+08:00"
+      },
+      "when": {
+        "all": [
+          {
+            "selector": {
+              "cube_plan": "pxpay"
+            }
+          },
+          {
+            "issuerDecision": "是否為登記國內、臺幣交易且可用全支付綁 CUBE 信用卡付款之合作通路，並符合全部排除品項？"
+          },
+          {
+            "route": {
+              "platform": [
+                "pxPlus"
+              ],
+              "funding": [
+                "creditCard"
+              ]
+            }
+          },
+          {
+            "spendType": "general"
+          },
+          {
+            "country": "TW"
+          },
+          {
+            "issuerDecision": "全支付「全支付國內通路」：銀行認列符合該類別及個別商戶完整限制（請款特店、指定門市／官方通路、品項、第三方收單排除），且依個別方案明列例外檢查一般消費及小樹點累積辦法排除；不由品牌命中推定。"
+          },
+          {
+            "currency": "TWD"
+          }
+        ]
+      },
+      "rate": {
+        "type": "fixed",
+        "percent": "2"
+      },
+      "includesBase": true,
+      "unit": "cube_points",
+      "rounding": {
+        "mode": "halfUp",
+        "basis": "perTransaction"
+      },
+      "combinable": {
+        "default": "unknown"
+      },
+      "evidenceRefs": [
+        "cube.s1#general",
+        "cube.s1#routes",
+        "cube.s1#rounding",
+        "cube.s1#monthly_cap",
+        "cube.s1#levels",
+        "cube.s2#pxpay_partners",
+        "cube.s2#pxpay_title",
+        "cube.s2#pxpay_notice",
+        "cube.s3#point_terms"
+      ],
+      "caps": [
+        {
+          "measure": "spend",
+          "amount": "creditLimit+500000",
+          "per": "calendarMonth",
+          "scope": "primaryAndSupplementary",
+          "overflowRule": "cube.general"
+        }
+      ]
+    },
+    {
+      "id": "cube.digital.ai",
+      "layer": "L1",
+      "kind": "bonus",
+      "group": "cube.main",
+      "period": {
+        "from": "2026-01-01T00:00:00+08:00",
+        "to": "2026-12-31T23:59:59.999999+08:00"
+      },
+      "when": {
+        "all": [
+          {
+            "selector": {
+              "cube_plan": "digital"
+            }
+          },
+          {
+            "merchantIn": "cube_digital_ai"
+          },
+          {
+            "route": {
+              "platform": [
+                "direct",
+                "applePay",
+                "samsungPay",
+                "googlePay",
+                "garminPay"
+              ],
+              "funding": [
+                "creditCard"
+              ]
+            }
+          },
+          {
+            "spendType": "general"
+          },
+          {
+            "issuerDecision": "玩數位「AI工具」：銀行認列符合該類別及個別商戶完整限制（請款特店、指定門市／官方通路、品項、第三方收單排除），且依個別方案明列例外檢查一般消費及小樹點累積辦法排除；不由品牌命中推定。"
+          },
+          {
+            "presence": "online"
+          }
+        ]
+      },
+      "rate": {
+        "type": "bySelector",
+        "selector": "cube_level",
+        "table": {
+          "L1": "2",
+          "L2": "3",
+          "L3": "3.3"
+        }
+      },
+      "includesBase": true,
+      "unit": "cube_points",
+      "rounding": {
+        "mode": "halfUp",
+        "basis": "perTransaction"
+      },
+      "combinable": {
+        "default": "unknown"
+      },
+      "evidenceRefs": [
+        "cube.s1#general",
+        "cube.s1#routes",
+        "cube.s1#rounding",
+        "cube.s1#monthly_cap",
+        "cube.s1#levels",
+        "cube.s2#digital_ai",
+        "cube.s2#digital_title",
+        "cube.s2#digital_notice",
+        "cube.s3#point_terms"
+      ],
+      "caps": [
+        {
+          "measure": "spend",
+          "amount": "creditLimit+500000",
+          "per": "calendarMonth",
+          "scope": "primaryAndSupplementary",
+          "overflowRule": "cube.general"
+        }
+      ]
+    },
+    {
+      "id": "cube.digital.streaming",
+      "layer": "L1",
+      "kind": "bonus",
+      "group": "cube.main",
+      "period": {
+        "from": "2026-01-01T00:00:00+08:00",
+        "to": "2026-12-31T23:59:59.999999+08:00"
+      },
+      "when": {
+        "all": [
+          {
+            "selector": {
+              "cube_plan": "digital"
+            }
+          },
+          {
+            "merchantIn": "cube_digital_streaming"
+          },
+          {
+            "route": {
+              "platform": [
+                "direct",
+                "applePay",
+                "samsungPay",
+                "googlePay",
+                "garminPay"
+              ],
+              "funding": [
+                "creditCard"
+              ]
+            }
+          },
+          {
+            "spendType": "general"
+          },
+          {
+            "issuerDecision": "玩數位「數位/串流平台」：銀行認列符合該類別及個別商戶完整限制（請款特店、指定門市／官方通路、品項、第三方收單排除），且依個別方案明列例外檢查一般消費及小樹點累積辦法排除；不由品牌命中推定。"
+          },
+          {
+            "presence": "online"
+          }
+        ]
+      },
+      "rate": {
+        "type": "bySelector",
+        "selector": "cube_level",
+        "table": {
+          "L1": "2",
+          "L2": "3",
+          "L3": "3.3"
+        }
+      },
+      "includesBase": true,
+      "unit": "cube_points",
+      "rounding": {
+        "mode": "halfUp",
+        "basis": "perTransaction"
+      },
+      "combinable": {
+        "default": "unknown"
+      },
+      "evidenceRefs": [
+        "cube.s1#general",
+        "cube.s1#routes",
+        "cube.s1#rounding",
+        "cube.s1#monthly_cap",
+        "cube.s1#levels",
+        "cube.s2#digital_streaming",
+        "cube.s2#digital_title",
+        "cube.s2#digital_notice",
+        "cube.s3#point_terms"
+      ],
+      "caps": [
+        {
+          "measure": "spend",
+          "amount": "creditLimit+500000",
+          "per": "calendarMonth",
+          "scope": "primaryAndSupplementary",
+          "overflowRule": "cube.general"
+        }
+      ]
+    },
+    {
+      "id": "cube.digital.shopping",
+      "layer": "L1",
+      "kind": "bonus",
+      "group": "cube.main",
+      "period": {
+        "from": "2026-01-01T00:00:00+08:00",
+        "to": "2026-12-31T23:59:59.999999+08:00"
+      },
+      "when": {
+        "all": [
+          {
+            "selector": {
+              "cube_plan": "digital"
+            }
+          },
+          {
+            "merchantIn": "cube_digital_shopping"
+          },
+          {
+            "route": {
+              "platform": [
+                "direct",
+                "applePay",
+                "samsungPay",
+                "googlePay",
+                "garminPay"
+              ],
+              "funding": [
+                "creditCard"
+              ]
+            }
+          },
+          {
+            "spendType": "general"
+          },
+          {
+            "issuerDecision": "玩數位「網購平台」：銀行認列符合該類別及個別商戶完整限制（請款特店、指定門市／官方通路、品項、第三方收單排除），且依個別方案明列例外檢查一般消費及小樹點累積辦法排除；不由品牌命中推定。"
+          },
+          {
+            "presence": "online"
+          }
+        ]
+      },
+      "rate": {
+        "type": "bySelector",
+        "selector": "cube_level",
+        "table": {
+          "L1": "2",
+          "L2": "3",
+          "L3": "3.3"
+        }
+      },
+      "includesBase": true,
+      "unit": "cube_points",
+      "rounding": {
+        "mode": "halfUp",
+        "basis": "perTransaction"
+      },
+      "combinable": {
+        "default": "unknown"
+      },
+      "evidenceRefs": [
+        "cube.s1#general",
+        "cube.s1#routes",
+        "cube.s1#rounding",
+        "cube.s1#monthly_cap",
+        "cube.s1#levels",
+        "cube.s2#digital_shopping",
+        "cube.s2#digital_title",
+        "cube.s2#digital_notice",
+        "cube.s3#point_terms"
+      ],
+      "caps": [
+        {
+          "measure": "spend",
+          "amount": "creditLimit+500000",
+          "per": "calendarMonth",
+          "scope": "primaryAndSupplementary",
+          "overflowRule": "cube.general"
+        }
+      ]
+    },
+    {
+      "id": "cube.digital.international",
+      "layer": "L1",
+      "kind": "bonus",
+      "group": "cube.main",
+      "period": {
+        "from": "2026-01-01T00:00:00+08:00",
+        "to": "2026-12-31T23:59:59.999999+08:00"
+      },
+      "when": {
+        "all": [
+          {
+            "selector": {
+              "cube_plan": "digital"
+            }
+          },
+          {
+            "merchantIn": "cube_digital_international"
+          },
+          {
+            "route": {
+              "platform": [
+                "direct",
+                "applePay",
+                "samsungPay",
+                "googlePay",
+                "garminPay"
+              ],
+              "funding": [
+                "creditCard"
+              ]
+            }
+          },
+          {
+            "spendType": "general"
+          },
+          {
+            "issuerDecision": "玩數位「國際電商」：銀行認列符合該類別及個別商戶完整限制（請款特店、指定門市／官方通路、品項、第三方收單排除），且依個別方案明列例外檢查一般消費及小樹點累積辦法排除；不由品牌命中推定。"
+          },
+          {
+            "presence": "online"
+          }
+        ]
+      },
+      "rate": {
+        "type": "bySelector",
+        "selector": "cube_level",
+        "table": {
+          "L1": "2",
+          "L2": "3",
+          "L3": "3.3"
+        }
+      },
+      "includesBase": true,
+      "unit": "cube_points",
+      "rounding": {
+        "mode": "halfUp",
+        "basis": "perTransaction"
+      },
+      "combinable": {
+        "default": "unknown"
+      },
+      "evidenceRefs": [
+        "cube.s1#general",
+        "cube.s1#routes",
+        "cube.s1#rounding",
+        "cube.s1#monthly_cap",
+        "cube.s1#levels",
+        "cube.s2#digital_international",
+        "cube.s2#digital_title",
+        "cube.s2#digital_notice",
+        "cube.s3#point_terms"
+      ],
+      "caps": [
+        {
+          "measure": "spend",
+          "amount": "creditLimit+500000",
+          "per": "calendarMonth",
+          "scope": "primaryAndSupplementary",
+          "overflowRule": "cube.general"
+        }
+      ]
+    },
+    {
+      "id": "cube.dining_shopping.department",
+      "layer": "L1",
+      "kind": "bonus",
+      "group": "cube.main",
+      "period": {
+        "from": "2026-01-01T00:00:00+08:00",
+        "to": "2026-12-31T23:59:59.999999+08:00"
+      },
+      "when": {
+        "all": [
+          {
+            "selector": {
+              "cube_plan": "dining_shopping"
+            }
+          },
+          {
+            "merchantIn": "cube_dining_shopping_department"
+          },
+          {
+            "route": {
+              "platform": [
+                "direct",
+                "applePay",
+                "samsungPay",
+                "googlePay",
+                "garminPay"
+              ],
+              "funding": [
+                "creditCard"
+              ]
+            }
+          },
+          {
+            "spendType": "general"
+          },
+          {
+            "country": "TW"
+          },
+          {
+            "issuerDecision": "樂饗購「國內指定百貨」：銀行認列符合該類別及個別商戶完整限制（請款特店、指定門市／官方通路、品項、第三方收單排除），且依個別方案明列例外檢查一般消費及小樹點累積辦法排除；不由品牌命中推定。"
+          }
+        ]
+      },
+      "rate": {
+        "type": "bySelector",
+        "selector": "cube_level",
+        "table": {
+          "L1": "2",
+          "L2": "3",
+          "L3": "3.3"
+        }
+      },
+      "includesBase": true,
+      "unit": "cube_points",
+      "rounding": {
+        "mode": "halfUp",
+        "basis": "perTransaction"
+      },
+      "combinable": {
+        "default": "unknown"
+      },
+      "evidenceRefs": [
+        "cube.s1#general",
+        "cube.s1#routes",
+        "cube.s1#rounding",
+        "cube.s1#monthly_cap",
+        "cube.s1#levels",
+        "cube.s2#dining_shopping_department",
+        "cube.s2#dining_shopping_title",
+        "cube.s2#dining_shopping_notice",
+        "cube.s3#point_terms"
+      ],
+      "caps": [
+        {
+          "measure": "spend",
+          "amount": "creditLimit+500000",
+          "per": "calendarMonth",
+          "scope": "primaryAndSupplementary",
+          "overflowRule": "cube.general"
+        }
+      ]
+    },
+    {
+      "id": "cube.dining_shopping.delivery",
+      "layer": "L1",
+      "kind": "bonus",
+      "group": "cube.main",
+      "period": {
+        "from": "2026-01-01T00:00:00+08:00",
+        "to": "2026-12-31T23:59:59.999999+08:00"
+      },
+      "when": {
+        "all": [
+          {
+            "selector": {
+              "cube_plan": "dining_shopping"
+            }
+          },
+          {
+            "merchantIn": "cube_dining_shopping_delivery"
+          },
+          {
+            "route": {
+              "platform": [
+                "direct",
+                "applePay",
+                "samsungPay",
+                "googlePay",
+                "garminPay"
+              ],
+              "funding": [
+                "creditCard"
+              ]
+            }
+          },
+          {
+            "spendType": "general"
+          },
+          {
+            "country": "TW"
+          },
+          {
+            "issuerDecision": "樂饗購「國內外送平台」：銀行認列符合該類別及個別商戶完整限制（請款特店、指定門市／官方通路、品項、第三方收單排除），且依個別方案明列例外檢查一般消費及小樹點累積辦法排除；不由品牌命中推定。"
+          }
+        ]
+      },
+      "rate": {
+        "type": "bySelector",
+        "selector": "cube_level",
+        "table": {
+          "L1": "2",
+          "L2": "3",
+          "L3": "3.3"
+        }
+      },
+      "includesBase": true,
+      "unit": "cube_points",
+      "rounding": {
+        "mode": "halfUp",
+        "basis": "perTransaction"
+      },
+      "combinable": {
+        "default": "unknown"
+      },
+      "evidenceRefs": [
+        "cube.s1#general",
+        "cube.s1#routes",
+        "cube.s1#rounding",
+        "cube.s1#monthly_cap",
+        "cube.s1#levels",
+        "cube.s2#dining_shopping_delivery",
+        "cube.s2#dining_shopping_title",
+        "cube.s2#dining_shopping_notice",
+        "cube.s3#point_terms"
+      ],
+      "caps": [
+        {
+          "measure": "spend",
+          "amount": "creditLimit+500000",
+          "per": "calendarMonth",
+          "scope": "primaryAndSupplementary",
+          "overflowRule": "cube.general"
+        }
+      ]
+    },
+    {
+      "id": "cube.dining_shopping.restaurants",
+      "layer": "L1",
+      "kind": "bonus",
+      "group": "cube.main",
+      "period": {
+        "from": "2026-01-01T00:00:00+08:00",
+        "to": "2026-12-31T23:59:59.999999+08:00"
+      },
+      "when": {
+        "all": [
+          {
+            "selector": {
+              "cube_plan": "dining_shopping"
+            }
+          },
+          {
+            "merchantIn": "cube_dining_shopping_restaurants"
+          },
+          {
+            "route": {
+              "platform": [
+                "direct",
+                "applePay",
+                "samsungPay",
+                "googlePay",
+                "garminPay"
+              ],
+              "funding": [
+                "creditCard"
+              ]
+            }
+          },
+          {
+            "spendType": "general"
+          },
+          {
+            "country": "TW"
+          },
+          {
+            "issuerDecision": "樂饗購「國內餐飲」：銀行認列符合該類別及個別商戶完整限制（請款特店、指定門市／官方通路、品項、第三方收單排除），且依個別方案明列例外檢查一般消費及小樹點累積辦法排除；不由品牌命中推定。"
+          }
+        ]
+      },
+      "rate": {
+        "type": "bySelector",
+        "selector": "cube_level",
+        "table": {
+          "L1": "2",
+          "L2": "3",
+          "L3": "3.3"
+        }
+      },
+      "includesBase": true,
+      "unit": "cube_points",
+      "rounding": {
+        "mode": "halfUp",
+        "basis": "perTransaction"
+      },
+      "combinable": {
+        "default": "unknown"
+      },
+      "evidenceRefs": [
+        "cube.s1#general",
+        "cube.s1#routes",
+        "cube.s1#rounding",
+        "cube.s1#monthly_cap",
+        "cube.s1#levels",
+        "cube.s2#dining_shopping_restaurants",
+        "cube.s2#dining_shopping_title",
+        "cube.s2#dining_shopping_notice",
+        "cube.s3#point_terms"
+      ],
+      "caps": [
+        {
+          "measure": "spend",
+          "amount": "creditLimit+500000",
+          "per": "calendarMonth",
+          "scope": "primaryAndSupplementary",
+          "overflowRule": "cube.general"
+        }
+      ]
+    },
+    {
+      "id": "cube.dining_shopping.drugstore",
+      "layer": "L1",
+      "kind": "bonus",
+      "group": "cube.main",
+      "period": {
+        "from": "2026-01-01T00:00:00+08:00",
+        "to": "2026-12-31T23:59:59.999999+08:00"
+      },
+      "when": {
+        "all": [
+          {
+            "selector": {
+              "cube_plan": "dining_shopping"
+            }
+          },
+          {
+            "merchantIn": "cube_dining_shopping_drugstore"
+          },
+          {
+            "route": {
+              "platform": [
+                "direct",
+                "applePay",
+                "samsungPay",
+                "googlePay",
+                "garminPay"
+              ],
+              "funding": [
+                "creditCard"
+              ]
+            }
+          },
+          {
+            "spendType": "general"
+          },
+          {
+            "country": "TW"
+          },
+          {
+            "issuerDecision": "樂饗購「國內藥妝」：銀行認列符合該類別及個別商戶完整限制（請款特店、指定門市／官方通路、品項、第三方收單排除），且依個別方案明列例外檢查一般消費及小樹點累積辦法排除；不由品牌命中推定。"
+          }
+        ]
+      },
+      "rate": {
+        "type": "bySelector",
+        "selector": "cube_level",
+        "table": {
+          "L1": "2",
+          "L2": "3",
+          "L3": "3.3"
+        }
+      },
+      "includesBase": true,
+      "unit": "cube_points",
+      "rounding": {
+        "mode": "halfUp",
+        "basis": "perTransaction"
+      },
+      "combinable": {
+        "default": "unknown"
+      },
+      "evidenceRefs": [
+        "cube.s1#general",
+        "cube.s1#routes",
+        "cube.s1#rounding",
+        "cube.s1#monthly_cap",
+        "cube.s1#levels",
+        "cube.s2#dining_shopping_drugstore",
+        "cube.s2#dining_shopping_title",
+        "cube.s2#dining_shopping_notice",
+        "cube.s3#point_terms"
+      ],
+      "caps": [
+        {
+          "measure": "spend",
+          "amount": "creditLimit+500000",
+          "per": "calendarMonth",
+          "scope": "primaryAndSupplementary",
+          "overflowRule": "cube.general"
+        }
+      ]
+    },
+    {
+      "id": "cube.travel.overseas",
+      "layer": "L1",
+      "kind": "bonus",
+      "group": "cube.main",
+      "period": {
+        "from": "2026-01-01T00:00:00+08:00",
+        "to": "2026-12-31T23:59:59.999999+08:00"
+      },
+      "when": {
+        "all": [
+          {
+            "selector": {
+              "cube_plan": "travel"
+            }
+          },
+          {
+            "any": [
+              {
+                "not": {
+                  "country": "TW"
+                }
+              },
+              {
+                "not": {
+                  "currency": "TWD"
+                }
+              }
+            ]
+          },
+          {
+            "route": {
+              "platform": [
+                "direct",
+                "applePay",
+                "samsungPay",
+                "googlePay",
+                "garminPay"
+              ],
+              "funding": [
+                "creditCard"
+              ]
+            }
+          },
+          {
+            "spendType": "general"
+          },
+          {
+            "issuerDecision": "趣旅行「指定海外消費」：銀行認列符合該類別及個別商戶完整限制（請款特店、指定門市／官方通路、品項、第三方收單排除），且依個別方案明列例外檢查一般消費及小樹點累積辦法排除；不由品牌命中推定。"
+          },
+          {
+            "presence": "inPerson"
+          }
+        ]
+      },
+      "rate": {
+        "type": "bySelector",
+        "selector": "cube_level",
+        "table": {
+          "L1": "2",
+          "L2": "3",
+          "L3": "3.3"
+        }
+      },
+      "includesBase": true,
+      "unit": "cube_points",
+      "rounding": {
+        "mode": "halfUp",
+        "basis": "perTransaction"
+      },
+      "combinable": {
+        "default": "unknown"
+      },
+      "evidenceRefs": [
+        "cube.s1#general",
+        "cube.s1#routes",
+        "cube.s1#rounding",
+        "cube.s1#monthly_cap",
+        "cube.s1#levels",
+        "cube.s2#travel_overseas",
+        "cube.s2#travel_title",
+        "cube.s2#travel_notice",
+        "cube.s3#point_terms"
+      ],
+      "caps": [
+        {
+          "measure": "spend",
+          "amount": "creditLimit+500000",
+          "per": "calendarMonth",
+          "scope": "primaryAndSupplementary",
+          "overflowRule": "cube.general"
+        }
+      ]
+    },
+    {
+      "id": "cube.travel.japan_parks",
+      "layer": "L1",
+      "kind": "bonus",
+      "group": "cube.main",
+      "period": {
+        "from": "2026-01-01T00:00:00+08:00",
+        "to": "2026-12-31T23:59:59.999999+08:00"
+      },
+      "when": {
+        "all": [
+          {
+            "selector": {
+              "cube_plan": "travel"
+            }
+          },
+          {
+            "merchantIn": "cube_travel_japan_parks"
+          },
+          {
+            "route": {
+              "platform": [
+                "direct",
+                "applePay",
+                "samsungPay",
+                "googlePay",
+                "garminPay"
+              ],
+              "funding": [
+                "creditCard"
+              ]
+            }
+          },
+          {
+            "spendType": "general"
+          },
+          {
+            "issuerDecision": "趣旅行「日本指定遊樂園」：銀行認列符合該類別及個別商戶完整限制（請款特店、指定門市／官方通路、品項、第三方收單排除），且依個別方案明列例外檢查一般消費及小樹點累積辦法排除；不由品牌命中推定。"
+          }
+        ]
+      },
+      "rate": {
+        "type": "bySelector",
+        "selector": "cube_level",
+        "table": {
+          "L1": "2",
+          "L2": "3",
+          "L3": "3.3"
+        }
+      },
+      "includesBase": true,
+      "unit": "cube_points",
+      "rounding": {
+        "mode": "halfUp",
+        "basis": "perTransaction"
+      },
+      "combinable": {
+        "default": "unknown"
+      },
+      "evidenceRefs": [
+        "cube.s1#general",
+        "cube.s1#routes",
+        "cube.s1#rounding",
+        "cube.s1#monthly_cap",
+        "cube.s1#levels",
+        "cube.s2#travel_japan_parks",
+        "cube.s2#travel_title",
+        "cube.s2#travel_notice",
+        "cube.s3#point_terms"
+      ],
+      "caps": [
+        {
+          "measure": "spend",
+          "amount": "creditLimit+500000",
+          "per": "calendarMonth",
+          "scope": "primaryAndSupplementary",
+          "overflowRule": "cube.general"
+        }
+      ]
+    },
+    {
+      "id": "cube.travel.transport",
+      "layer": "L1",
+      "kind": "bonus",
+      "group": "cube.main",
+      "period": {
+        "from": "2026-01-01T00:00:00+08:00",
+        "to": "2026-12-31T23:59:59.999999+08:00"
+      },
+      "when": {
+        "all": [
+          {
+            "selector": {
+              "cube_plan": "travel"
+            }
+          },
+          {
+            "merchantIn": "cube_travel_transport"
+          },
+          {
+            "route": {
+              "platform": [
+                "direct",
+                "applePay",
+                "samsungPay",
+                "googlePay",
+                "garminPay"
+              ],
+              "funding": [
+                "creditCard"
+              ]
+            }
+          },
+          {
+            "spendType": "general"
+          },
+          {
+            "issuerDecision": "趣旅行「指定國內外交通」：銀行認列符合該類別及個別商戶完整限制（請款特店、指定門市／官方通路、品項、第三方收單排除），且依個別方案明列例外檢查一般消費及小樹點累積辦法排除；不由品牌命中推定。"
+          }
+        ]
+      },
+      "rate": {
+        "type": "bySelector",
+        "selector": "cube_level",
+        "table": {
+          "L1": "2",
+          "L2": "3",
+          "L3": "3.3"
+        }
+      },
+      "includesBase": true,
+      "unit": "cube_points",
+      "rounding": {
+        "mode": "halfUp",
+        "basis": "perTransaction"
+      },
+      "combinable": {
+        "default": "unknown"
+      },
+      "evidenceRefs": [
+        "cube.s1#general",
+        "cube.s1#routes",
+        "cube.s1#rounding",
+        "cube.s1#monthly_cap",
+        "cube.s1#levels",
+        "cube.s2#travel_transport",
+        "cube.s2#travel_title",
+        "cube.s2#travel_notice",
+        "cube.s3#point_terms"
+      ],
+      "caps": [
+        {
+          "measure": "spend",
+          "amount": "creditLimit+500000",
+          "per": "calendarMonth",
+          "scope": "primaryAndSupplementary",
+          "overflowRule": "cube.general"
+        }
+      ]
+    },
+    {
+      "id": "cube.travel.airlines",
+      "layer": "L1",
+      "kind": "bonus",
+      "group": "cube.main",
+      "period": {
+        "from": "2026-01-01T00:00:00+08:00",
+        "to": "2026-12-31T23:59:59.999999+08:00"
+      },
+      "when": {
+        "all": [
+          {
+            "selector": {
+              "cube_plan": "travel"
+            }
+          },
+          {
+            "merchantIn": "cube_travel_airlines"
+          },
+          {
+            "route": {
+              "platform": [
+                "direct",
+                "applePay",
+                "samsungPay",
+                "googlePay",
+                "garminPay"
+              ],
+              "funding": [
+                "creditCard"
+              ]
+            }
+          },
+          {
+            "spendType": "general"
+          },
+          {
+            "issuerDecision": "趣旅行「指定航空公司」：銀行認列符合該類別及個別商戶完整限制（請款特店、指定門市／官方通路、品項、第三方收單排除），且依個別方案明列例外檢查一般消費及小樹點累積辦法排除；不由品牌命中推定。"
+          }
+        ]
+      },
+      "rate": {
+        "type": "bySelector",
+        "selector": "cube_level",
+        "table": {
+          "L1": "2",
+          "L2": "3",
+          "L3": "3.3"
+        }
+      },
+      "includesBase": true,
+      "unit": "cube_points",
+      "rounding": {
+        "mode": "halfUp",
+        "basis": "perTransaction"
+      },
+      "combinable": {
+        "default": "unknown"
+      },
+      "evidenceRefs": [
+        "cube.s1#general",
+        "cube.s1#routes",
+        "cube.s1#rounding",
+        "cube.s1#monthly_cap",
+        "cube.s1#levels",
+        "cube.s2#travel_airlines",
+        "cube.s2#travel_title",
+        "cube.s2#travel_notice",
+        "cube.s3#point_terms"
+      ],
+      "caps": [
+        {
+          "measure": "spend",
+          "amount": "creditLimit+500000",
+          "per": "calendarMonth",
+          "scope": "primaryAndSupplementary",
+          "overflowRule": "cube.general"
+        }
+      ]
+    },
+    {
+      "id": "cube.travel.hotels",
+      "layer": "L1",
+      "kind": "bonus",
+      "group": "cube.main",
+      "period": {
+        "from": "2026-01-01T00:00:00+08:00",
+        "to": "2026-12-31T23:59:59.999999+08:00"
+      },
+      "when": {
+        "all": [
+          {
+            "selector": {
+              "cube_plan": "travel"
+            }
+          },
+          {
+            "merchantIn": "cube_travel_hotels"
+          },
+          {
+            "route": {
+              "platform": [
+                "direct",
+                "applePay",
+                "samsungPay",
+                "googlePay",
+                "garminPay"
+              ],
+              "funding": [
+                "creditCard"
+              ]
+            }
+          },
+          {
+            "spendType": "general"
+          },
+          {
+            "issuerDecision": "趣旅行「指定飯店住宿」：銀行認列符合該類別及個別商戶完整限制（請款特店、指定門市／官方通路、品項、第三方收單排除），且依個別方案明列例外檢查一般消費及小樹點累積辦法排除；不由品牌命中推定。"
+          }
+        ]
+      },
+      "rate": {
+        "type": "bySelector",
+        "selector": "cube_level",
+        "table": {
+          "L1": "2",
+          "L2": "3",
+          "L3": "3.3"
+        }
+      },
+      "includesBase": true,
+      "unit": "cube_points",
+      "rounding": {
+        "mode": "halfUp",
+        "basis": "perTransaction"
+      },
+      "combinable": {
+        "default": "unknown"
+      },
+      "evidenceRefs": [
+        "cube.s1#general",
+        "cube.s1#routes",
+        "cube.s1#rounding",
+        "cube.s1#monthly_cap",
+        "cube.s1#levels",
+        "cube.s2#travel_hotels",
+        "cube.s2#travel_title",
+        "cube.s2#travel_notice",
+        "cube.s3#point_terms"
+      ],
+      "caps": [
+        {
+          "measure": "spend",
+          "amount": "creditLimit+500000",
+          "per": "calendarMonth",
+          "scope": "primaryAndSupplementary",
+          "overflowRule": "cube.general"
+        }
+      ]
+    },
+    {
+      "id": "cube.travel.booking",
+      "layer": "L1",
+      "kind": "bonus",
+      "group": "cube.main",
+      "period": {
+        "from": "2026-01-01T00:00:00+08:00",
+        "to": "2026-12-31T23:59:59.999999+08:00"
+      },
+      "when": {
+        "all": [
+          {
+            "selector": {
+              "cube_plan": "travel"
+            }
+          },
+          {
+            "merchantIn": "cube_travel_booking"
+          },
+          {
+            "route": {
+              "platform": [
+                "direct",
+                "applePay",
+                "samsungPay",
+                "googlePay",
+                "garminPay"
+              ],
+              "funding": [
+                "creditCard"
+              ]
+            }
+          },
+          {
+            "spendType": "general"
+          },
+          {
+            "issuerDecision": "趣旅行「指定旅遊/訂房平台」：銀行認列符合該類別及個別商戶完整限制（請款特店、指定門市／官方通路、品項、第三方收單排除），且依個別方案明列例外檢查一般消費及小樹點累積辦法排除；不由品牌命中推定。"
+          }
+        ]
+      },
+      "rate": {
+        "type": "bySelector",
+        "selector": "cube_level",
+        "table": {
+          "L1": "2",
+          "L2": "3",
+          "L3": "3.3"
+        }
+      },
+      "includesBase": true,
+      "unit": "cube_points",
+      "rounding": {
+        "mode": "halfUp",
+        "basis": "perTransaction"
+      },
+      "combinable": {
+        "default": "unknown"
+      },
+      "evidenceRefs": [
+        "cube.s1#general",
+        "cube.s1#routes",
+        "cube.s1#rounding",
+        "cube.s1#monthly_cap",
+        "cube.s1#levels",
+        "cube.s2#travel_booking",
+        "cube.s2#travel_title",
+        "cube.s2#travel_notice",
+        "cube.s3#point_terms"
+      ],
+      "caps": [
+        {
+          "measure": "spend",
+          "amount": "creditLimit+500000",
+          "per": "calendarMonth",
+          "scope": "primaryAndSupplementary",
+          "overflowRule": "cube.general"
+        }
+      ]
+    },
+    {
+      "id": "cube.travel.agency",
+      "layer": "L1",
+      "kind": "bonus",
+      "group": "cube.main",
+      "period": {
+        "from": "2026-01-01T00:00:00+08:00",
+        "to": "2026-12-31T23:59:59.999999+08:00"
+      },
+      "when": {
+        "all": [
+          {
+            "selector": {
+              "cube_plan": "travel"
+            }
+          },
+          {
+            "merchantIn": "cube_travel_agency"
+          },
+          {
+            "route": {
+              "platform": [
+                "direct",
+                "applePay",
+                "samsungPay",
+                "googlePay",
+                "garminPay"
+              ],
+              "funding": [
+                "creditCard"
+              ]
+            }
+          },
+          {
+            "spendType": "general"
+          },
+          {
+            "issuerDecision": "趣旅行「指定旅行社」：銀行認列符合該類別及個別商戶完整限制（請款特店、指定門市／官方通路、品項、第三方收單排除），且依個別方案明列例外檢查一般消費及小樹點累積辦法排除；不由品牌命中推定。"
+          }
+        ]
+      },
+      "rate": {
+        "type": "bySelector",
+        "selector": "cube_level",
+        "table": {
+          "L1": "2",
+          "L2": "3",
+          "L3": "3.3"
+        }
+      },
+      "includesBase": true,
+      "unit": "cube_points",
+      "rounding": {
+        "mode": "halfUp",
+        "basis": "perTransaction"
+      },
+      "combinable": {
+        "default": "unknown"
+      },
+      "evidenceRefs": [
+        "cube.s1#general",
+        "cube.s1#routes",
+        "cube.s1#rounding",
+        "cube.s1#monthly_cap",
+        "cube.s1#levels",
+        "cube.s2#travel_agency",
+        "cube.s2#travel_title",
+        "cube.s2#travel_notice",
+        "cube.s3#point_terms"
+      ],
+      "caps": [
+        {
+          "measure": "spend",
+          "amount": "creditLimit+500000",
+          "per": "calendarMonth",
+          "scope": "primaryAndSupplementary",
+          "overflowRule": "cube.general"
+        }
+      ]
+    },
+    {
+      "id": "cube.select.charging",
+      "layer": "L1",
+      "kind": "bonus",
+      "group": "cube.main",
+      "period": {
+        "from": "2026-01-01T00:00:00+08:00",
+        "to": "2026-12-31T23:59:59.999999+08:00"
+      },
+      "when": {
+        "all": [
+          {
+            "selector": {
+              "cube_plan": "select"
+            }
+          },
+          {
+            "merchantIn": "cube_select_charging"
+          },
+          {
+            "route": {
+              "platform": [
+                "direct",
+                "applePay",
+                "samsungPay",
+                "googlePay",
+                "garminPay"
+              ],
+              "funding": [
+                "creditCard"
+              ]
+            }
+          },
+          {
+            "spendType": "general"
+          },
+          {
+            "country": "TW"
+          },
+          {
+            "issuerDecision": "集精選「充電站」：銀行認列符合該類別及個別商戶完整限制（請款特店、指定門市／官方通路、品項、第三方收單排除），且依個別方案明列例外檢查一般消費及小樹點累積辦法排除；不由品牌命中推定。"
+          }
+        ]
+      },
+      "rate": {
+        "type": "fixed",
+        "percent": "2"
+      },
+      "includesBase": true,
+      "unit": "cube_points",
+      "rounding": {
+        "mode": "halfUp",
+        "basis": "perTransaction"
+      },
+      "combinable": {
+        "default": "unknown"
+      },
+      "evidenceRefs": [
+        "cube.s1#general",
+        "cube.s1#routes",
+        "cube.s1#rounding",
+        "cube.s1#monthly_cap",
+        "cube.s1#levels",
+        "cube.s2#select_charging",
+        "cube.s2#select_title",
+        "cube.s2#select_notice",
+        "cube.s3#point_terms"
+      ],
+      "caps": [
+        {
+          "measure": "spend",
+          "amount": "creditLimit+500000",
+          "per": "calendarMonth",
+          "scope": "primaryAndSupplementary",
+          "overflowRule": "cube.general"
+        }
+      ]
+    },
+    {
+      "id": "cube.select.parking",
+      "layer": "L1",
+      "kind": "bonus",
+      "group": "cube.main",
+      "period": {
+        "from": "2026-01-01T00:00:00+08:00",
+        "to": "2026-12-31T23:59:59.999999+08:00"
+      },
+      "when": {
+        "all": [
+          {
+            "selector": {
+              "cube_plan": "select"
+            }
+          },
+          {
+            "merchantIn": "cube_select_parking"
+          },
+          {
+            "route": {
+              "platform": [
+                "direct",
+                "applePay",
+                "samsungPay",
+                "googlePay",
+                "garminPay"
+              ],
+              "funding": [
+                "creditCard"
+              ]
+            }
+          },
+          {
+            "spendType": "general"
+          },
+          {
+            "country": "TW"
+          },
+          {
+            "issuerDecision": "集精選「停車費」：銀行認列符合該類別及個別商戶完整限制（請款特店、指定門市／官方通路、品項、第三方收單排除），且依個別方案明列例外檢查一般消費及小樹點累積辦法排除；不由品牌命中推定。"
+          }
+        ]
+      },
+      "rate": {
+        "type": "fixed",
+        "percent": "2"
+      },
+      "includesBase": true,
+      "unit": "cube_points",
+      "rounding": {
+        "mode": "halfUp",
+        "basis": "perTransaction"
+      },
+      "combinable": {
+        "default": "unknown"
+      },
+      "evidenceRefs": [
+        "cube.s1#general",
+        "cube.s1#routes",
+        "cube.s1#rounding",
+        "cube.s1#monthly_cap",
+        "cube.s1#levels",
+        "cube.s2#select_parking",
+        "cube.s2#select_title",
+        "cube.s2#select_notice",
+        "cube.s3#point_terms"
+      ],
+      "caps": [
+        {
+          "measure": "spend",
+          "amount": "creditLimit+500000",
+          "per": "calendarMonth",
+          "scope": "primaryAndSupplementary",
+          "overflowRule": "cube.general"
+        }
+      ]
+    },
+    {
+      "id": "cube.select.supermarket",
+      "layer": "L1",
+      "kind": "bonus",
+      "group": "cube.main",
+      "period": {
+        "from": "2026-01-01T00:00:00+08:00",
+        "to": "2026-12-31T23:59:59.999999+08:00"
+      },
+      "when": {
+        "all": [
+          {
+            "selector": {
+              "cube_plan": "select"
+            }
+          },
+          {
+            "merchantIn": "cube_select_supermarket"
+          },
+          {
+            "all": [
+              {
+                "route": {
+                  "funding": [
+                    "creditCard"
+                  ]
+                }
+              },
+              {
+                "any": [
+                  {
+                    "route": {
+                      "platform": [
+                        "direct",
+                        "applePay",
+                        "samsungPay",
+                        "googlePay",
+                        "garminPay"
+                      ],
+                      "funding": [
+                        "creditCard"
+                      ]
+                    }
+                  },
+                  {
+                    "all": [
+                      {
+                        "merchantIn": "cube_pxmart_only"
+                      },
+                      {
+                        "route": {
+                          "platform": [
+                            "pxPay"
+                          ]
+                        }
+                      },
+                      {
+                        "presence": "inPerson"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "spendType": "general"
+          },
+          {
+            "country": "TW"
+          },
+          {
+            "issuerDecision": "集精選「量販超市」：銀行認列符合該類別及個別商戶完整限制（請款特店、指定門市／官方通路、品項、第三方收單排除），且依個別方案明列例外檢查一般消費及小樹點累積辦法排除；不由品牌命中推定。"
+          },
+          {
+            "any": [
+              {
+                "merchantNotIn": "cube_pxmart_only"
+              },
+              {
+                "presence": "inPerson"
+              }
+            ]
+          }
+        ]
+      },
+      "rate": {
+        "type": "fixed",
+        "percent": "2"
+      },
+      "includesBase": true,
+      "unit": "cube_points",
+      "rounding": {
+        "mode": "halfUp",
+        "basis": "perTransaction"
+      },
+      "combinable": {
+        "default": "unknown"
+      },
+      "evidenceRefs": [
+        "cube.s1#general",
+        "cube.s1#routes",
+        "cube.s1#rounding",
+        "cube.s1#monthly_cap",
+        "cube.s1#levels",
+        "cube.s2#select_supermarket",
+        "cube.s2#select_title",
+        "cube.s2#select_notice",
+        "cube.s3#point_terms"
+      ],
+      "caps": [
+        {
+          "measure": "spend",
+          "amount": "creditLimit+500000",
+          "per": "calendarMonth",
+          "scope": "primaryAndSupplementary",
+          "overflowRule": "cube.general"
+        }
+      ]
+    },
+    {
+      "id": "cube.select.fuel",
+      "layer": "L1",
+      "kind": "bonus",
+      "group": "cube.main",
+      "period": {
+        "from": "2026-01-01T00:00:00+08:00",
+        "to": "2026-12-31T23:59:59.999999+08:00"
+      },
+      "when": {
+        "all": [
+          {
+            "selector": {
+              "cube_plan": "select"
+            }
+          },
+          {
+            "merchantIn": "cube_select_fuel"
+          },
+          {
+            "route": {
+              "platform": [
+                "direct",
+                "applePay",
+                "samsungPay",
+                "googlePay",
+                "garminPay"
+              ],
+              "funding": [
+                "creditCard"
+              ]
+            }
+          },
+          {
+            "spendType": "general"
+          },
+          {
+            "country": "TW"
+          },
+          {
+            "issuerDecision": "集精選「指定加油」：銀行認列符合該類別及個別商戶完整限制（請款特店、指定門市／官方通路、品項、第三方收單排除），且依個別方案明列例外檢查一般消費及小樹點累積辦法排除；不由品牌命中推定。"
+          }
+        ]
+      },
+      "rate": {
+        "type": "fixed",
+        "percent": "2"
+      },
+      "includesBase": true,
+      "unit": "cube_points",
+      "rounding": {
+        "mode": "halfUp",
+        "basis": "perTransaction"
+      },
+      "combinable": {
+        "default": "unknown"
+      },
+      "evidenceRefs": [
+        "cube.s1#general",
+        "cube.s1#routes",
+        "cube.s1#rounding",
+        "cube.s1#monthly_cap",
+        "cube.s1#levels",
+        "cube.s2#select_fuel",
+        "cube.s2#select_title",
+        "cube.s2#select_notice",
+        "cube.s3#point_terms"
+      ],
+      "caps": [
+        {
+          "measure": "spend",
+          "amount": "creditLimit+500000",
+          "per": "calendarMonth",
+          "scope": "primaryAndSupplementary",
+          "overflowRule": "cube.general"
+        }
+      ]
+    },
+    {
+      "id": "cube.select.convenience",
+      "layer": "L1",
+      "kind": "bonus",
+      "group": "cube.main",
+      "period": {
+        "from": "2026-01-01T00:00:00+08:00",
+        "to": "2026-12-31T23:59:59.999999+08:00"
+      },
+      "when": {
+        "all": [
+          {
+            "selector": {
+              "cube_plan": "select"
+            }
+          },
+          {
+            "merchantIn": "cube_select_convenience"
+          },
+          {
+            "all": [
+              {
+                "route": {
+                  "funding": [
+                    "creditCard"
+                  ]
+                }
+              },
+              {
+                "any": [
+                  {
+                    "route": {
+                      "platform": [
+                        "direct",
+                        "applePay",
+                        "samsungPay",
+                        "googlePay",
+                        "garminPay"
+                      ],
+                      "funding": [
+                        "creditCard"
+                      ]
+                    }
+                  },
+                  {
+                    "all": [
+                      {
+                        "merchantIn": "cube_seven"
+                      },
+                      {
+                        "route": {
+                          "platform": [
+                            "openWallet"
+                          ]
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "all": [
+                      {
+                        "merchantIn": "cube_family"
+                      },
+                      {
+                        "route": {
+                          "platform": [
+                            "myFamiPay"
+                          ]
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "spendType": "general"
+          },
+          {
+            "country": "TW"
+          },
+          {
+            "issuerDecision": "集精選「指定超商」：銀行認列符合該類別及個別商戶完整限制（請款特店、指定門市／官方通路、品項、第三方收單排除），且依個別方案明列例外檢查一般消費及小樹點累積辦法排除；不由品牌命中推定。"
+          },
+          {
+            "presence": "inPerson"
+          }
+        ]
+      },
+      "rate": {
+        "type": "fixed",
+        "percent": "2"
+      },
+      "includesBase": true,
+      "unit": "cube_points",
+      "rounding": {
+        "mode": "halfUp",
+        "basis": "perTransaction"
+      },
+      "combinable": {
+        "default": "unknown"
+      },
+      "evidenceRefs": [
+        "cube.s1#general",
+        "cube.s1#routes",
+        "cube.s1#rounding",
+        "cube.s1#monthly_cap",
+        "cube.s1#levels",
+        "cube.s2#select_convenience",
+        "cube.s2#select_title",
+        "cube.s2#select_notice",
+        "cube.s3#point_terms"
+      ],
+      "caps": [
+        {
+          "measure": "spend",
+          "amount": "creditLimit+500000",
+          "per": "calendarMonth",
+          "scope": "primaryAndSupplementary",
+          "overflowRule": "cube.general"
+        }
+      ]
+    },
+    {
+      "id": "cube.select.home",
+      "layer": "L1",
+      "kind": "bonus",
+      "group": "cube.main",
+      "period": {
+        "from": "2026-01-01T00:00:00+08:00",
+        "to": "2026-12-31T23:59:59.999999+08:00"
+      },
+      "when": {
+        "all": [
+          {
+            "selector": {
+              "cube_plan": "select"
+            }
+          },
+          {
+            "merchantIn": "cube_select_home"
+          },
+          {
+            "route": {
+              "platform": [
+                "direct",
+                "applePay",
+                "samsungPay",
+                "googlePay",
+                "garminPay"
+              ],
+              "funding": [
+                "creditCard"
+              ]
+            }
+          },
+          {
+            "spendType": "general"
+          },
+          {
+            "country": "TW"
+          },
+          {
+            "issuerDecision": "集精選「生活家居」：銀行認列符合該類別及個別商戶完整限制（請款特店、指定門市／官方通路、品項、第三方收單排除），且依個別方案明列例外檢查一般消費及小樹點累積辦法排除；不由品牌命中推定。"
+          }
+        ]
+      },
+      "rate": {
+        "type": "fixed",
+        "percent": "2"
+      },
+      "includesBase": true,
+      "unit": "cube_points",
+      "rounding": {
+        "mode": "halfUp",
+        "basis": "perTransaction"
+      },
+      "combinable": {
+        "default": "unknown"
+      },
+      "evidenceRefs": [
+        "cube.s1#general",
+        "cube.s1#routes",
+        "cube.s1#rounding",
+        "cube.s1#monthly_cap",
+        "cube.s1#levels",
+        "cube.s2#select_home",
+        "cube.s2#select_title",
+        "cube.s2#select_notice",
+        "cube.s3#point_terms"
+      ],
+      "caps": [
+        {
+          "measure": "spend",
+          "amount": "creditLimit+500000",
+          "per": "calendarMonth",
+          "scope": "primaryAndSupplementary",
+          "overflowRule": "cube.general"
+        }
+      ]
+    },
+    {
+      "id": "cube.birthday.c0",
+      "layer": "L1",
+      "kind": "bonus",
+      "group": "cube.main",
+      "status": "uncovered",
+      "notes": "慶生月 慶生月活動；2026/10/1~2026/12/31  ；指定門市、品項、私人資格／生日月或特殊支付例外無結構化欄位，維持 uncovered，不推定適用。"
+    },
+    {
+      "id": "cube.birthday.c1",
+      "layer": "L1",
+      "kind": "bonus",
+      "group": "cube.main",
+      "status": "uncovered",
+      "notes": "慶生月 口碑名店聚餐首選，熱鬧慶生  10%；2026/10/1~2026/12/31  ；指定門市、品項、私人資格／生日月或特殊支付例外無結構化欄位，維持 uncovered，不推定適用。"
+    },
+    {
+      "id": "cube.birthday.c2",
+      "layer": "L1",
+      "kind": "bonus",
+      "group": "cube.main",
+      "status": "uncovered",
+      "notes": "慶生月 中西式佳餚、火鍋， 豐富美味   10%；2026/10/1~2026/12/31  ；指定門市、品項、私人資格／生日月或特殊支付例外無結構化欄位，維持 uncovered，不推定適用。"
+    },
+    {
+      "id": "cube.birthday.c3",
+      "layer": "L1",
+      "kind": "bonus",
+      "group": "cube.main",
+      "status": "uncovered",
+      "notes": "慶生月 主廚演繹料理魅力， 沉浸感動   10%；2026/10/1~2026/12/31  ；指定門市、品項、私人資格／生日月或特殊支付例外無結構化欄位，維持 uncovered，不推定適用。"
+    },
+    {
+      "id": "cube.birthday.c4",
+      "layer": "L1",
+      "kind": "bonus",
+      "group": "cube.main",
+      "status": "uncovered",
+      "notes": "慶生月 精選人氣餐廳及甜點咖啡   10%；2026/10/1~2026/12/31  ；指定門市、品項、私人資格／生日月或特殊支付例外無結構化欄位，維持 uncovered，不推定適用。"
+    },
+    {
+      "id": "cube.birthday.c5",
+      "layer": "L1",
+      "kind": "bonus",
+      "group": "cube.main",
+      "status": "uncovered",
+      "notes": "慶生月 日本指定樂園、遊戲及旅遊時光   3.5%/10%；2026/10/1~2026/12/31  ；指定門市、品項、私人資格／生日月或特殊支付例外無結構化欄位，維持 uncovered，不推定適用。"
+    },
+    {
+      "id": "cube.birthday.c6",
+      "layer": "L1",
+      "kind": "bonus",
+      "group": "cube.main",
+      "status": "uncovered",
+      "notes": "慶生月 歌聲暢快身心及 都會享樂體驗   5%/10%；2026/10/1~2026/12/31  ；指定門市、品項、私人資格／生日月或特殊支付例外無結構化欄位，維持 uncovered，不推定適用。"
+    },
+    {
+      "id": "cube.birthday.c7",
+      "layer": "L1",
+      "kind": "bonus",
+      "group": "cube.main",
+      "status": "uncovered",
+      "notes": "慶生月 購物盡興外送便利，增添精彩    3.5%；2026/10/1~2026/12/31  ；指定門市、品項、私人資格／生日月或特殊支付例外無結構化欄位，維持 uncovered，不推定適用。"
+    },
+    {
+      "id": "cube.kids.c0",
+      "layer": "L1",
+      "kind": "bonus",
+      "group": "cube.main",
+      "status": "uncovered",
+      "notes": "童樂匯 如何解鎖童樂匯？；2026/7/1~2026/12/31  ；指定門市、品項、私人資格／生日月或特殊支付例外無結構化欄位，維持 uncovered，不推定適用。"
+    },
+    {
+      "id": "cube.kids.c1",
+      "layer": "L1",
+      "kind": "bonus",
+      "group": "cube.main",
+      "status": "uncovered",
+      "notes": "童樂匯 保費 1%；2026/7/1~2026/12/31  ；指定門市、品項、私人資格／生日月或特殊支付例外無結構化欄位，維持 uncovered，不推定適用。"
+    },
+    {
+      "id": "cube.kids.c2",
+      "layer": "L1",
+      "kind": "bonus",
+      "group": "cube.main",
+      "status": "uncovered",
+      "notes": "童樂匯 指定私校學費 1%；2026/7/1~2026/12/31  ；指定門市、品項、私人資格／生日月或特殊支付例外無結構化欄位，維持 uncovered，不推定適用。"
+    },
+    {
+      "id": "cube.kids.c3",
+      "layer": "L1",
+      "kind": "bonus",
+      "group": "cube.main",
+      "status": "uncovered",
+      "notes": "童樂匯 親子餐廳 5%；2026/7/1~2026/12/31  ；指定門市、品項、私人資格／生日月或特殊支付例外無結構化欄位，維持 uncovered，不推定適用。"
+    },
+    {
+      "id": "cube.kids.c4",
+      "layer": "L1",
+      "kind": "bonus",
+      "group": "cube.main",
+      "status": "uncovered",
+      "notes": "童樂匯 親子育樂5%；2026/7/1~2026/12/31  ；指定門市、品項、私人資格／生日月或特殊支付例外無結構化欄位，維持 uncovered，不推定適用。"
+    },
+    {
+      "id": "cube.kids.c5",
+      "layer": "L1",
+      "kind": "bonus",
+      "group": "cube.main",
+      "status": "uncovered",
+      "notes": "童樂匯 親子飯店 5%；2026/7/1~2026/12/31  ；指定門市、品項、私人資格／生日月或特殊支付例外無結構化欄位，維持 uncovered，不推定適用。"
+    },
+    {
+      "id": "cube.kids.c6",
+      "layer": "L1",
+      "kind": "bonus",
+      "group": "cube.main",
+      "status": "uncovered",
+      "notes": "童樂匯 母嬰用品店 5%；2026/7/1~2026/12/31  ；指定門市、品項、私人資格／生日月或特殊支付例外無結構化欄位，維持 uncovered，不推定適用。"
+    },
+    {
+      "id": "cube.kids.c7",
+      "layer": "L1",
+      "kind": "bonus",
+      "group": "cube.main",
+      "status": "uncovered",
+      "notes": "童樂匯 五感體驗課 10%；2026/7/1~2026/12/31  ；指定門市、品項、私人資格／生日月或特殊支付例外無結構化欄位，維持 uncovered，不推定適用。"
+    },
+    {
+      "id": "cube.kids.c8",
+      "layer": "L1",
+      "kind": "bonus",
+      "group": "cube.main",
+      "status": "uncovered",
+      "notes": "童樂匯 嬰幼童品牌官網 10%；2026/7/1~2026/12/31  ；指定門市、品項、私人資格／生日月或特殊支付例外無結構化欄位，維持 uncovered，不推定適用。"
+    }
+  ],
+  "exclusions": [
+    {
+      "id": "cube.ex.convenience",
+      "appliesTo": [
+        "cube.fixed.domestic",
+        "cube.fixed.overseasPhysical"
+      ],
+      "when": {
+        "merchantIn": "tw_convenience_store"
+      },
+      "effect": "zero",
+      "notes": "官方範例：LINE PAY-7-11 NT$100 為非一般消費 0 點",
+      "evidenceRefs": [
+        "cube.s1#fixed_exclusions",
+        "cube.s2#fixed_domestic",
+        "cube.s3#point_terms",
+        "cube.s1#overseas_definition",
+        "cube.s2#fixed_overseas"
+      ]
+    },
+    {
+      "id": "cube.ex.pxmart",
+      "appliesTo": [
+        "cube.fixed.domestic",
+        "cube.fixed.overseasPhysical"
+      ],
+      "when": {
+        "merchantIn": "pxmart_group"
+      },
+      "effect": "zero",
+      "evidenceRefs": [
+        "cube.s1#fixed_exclusions",
+        "cube.s2#fixed_domestic",
+        "cube.s3#point_terms",
+        "cube.s1#overseas_definition",
+        "cube.s2#fixed_overseas"
+      ]
+    },
+    {
+      "id": "cube.ex.micropay",
+      "appliesTo": [
+        "cube.fixed.domestic",
+        "cube.fixed.overseasPhysical"
+      ],
+      "when": {
+        "issuerDecision": "透過聯合信用卡處理中心小額支付平台之特約商店消費（如便利超商、連鎖速食店、停車費）"
+      },
+      "effect": "zero",
+      "notes": "是否走小額支付平台只有銀行收單資料能判斷，不以商家名稱推定",
+      "evidenceRefs": [
+        "cube.s1#fixed_exclusions",
+        "cube.s2#fixed_domestic",
+        "cube.s3#point_terms",
+        "cube.s1#overseas_definition",
+        "cube.s2#fixed_overseas"
+      ]
+    },
+    {
+      "id": "cube.ex.non_purchase",
+      "appliesTo": [
+        "cube.fixed.domestic",
+        "cube.fixed.overseasPhysical"
+      ],
+      "when": {
+        "spendType": [
+          "tax",
+          "tuition",
+          "utility",
+          "government",
+          "topup",
+          "storedValue",
+          "fee",
+          "cashAdvance"
+        ]
+      },
+      "effect": "zero",
+      "notes": "稅款、學費、公用事業費用、公務機關與繳費平台、各類加值、信用卡利息與手續費、預借現金",
+      "evidenceRefs": [
+        "cube.s1#fixed_exclusions",
+        "cube.s2#fixed_domestic",
+        "cube.s3#point_terms",
+        "cube.s1#overseas_definition",
+        "cube.s2#fixed_overseas"
+      ]
+    },
+    {
+      "id": "cube.ex.mcc_domestic",
+      "appliesTo": [
+        "cube.fixed.domestic"
+      ],
+      "when": {
+        "any": [
+          {
+            "merchantIn": "cube_excluded_investment_fx_crypto_mcc"
+          },
+          {
+            "merchantIn": "gambling_mcc"
+          }
+        ]
+      },
+      "effect": "zero",
+      "evidenceRefs": [
+        "cube.s1#fixed_exclusions",
+        "cube.s2#fixed_domestic",
+        "cube.s3#point_terms"
+      ]
+    },
+    {
+      "id": "cube.ex.overseas",
+      "appliesTo": [
+        "cube.fixed.overseasPhysical"
+      ],
+      "when": {
+        "any": [
+          {
+            "spendType": [
+              "medical",
+              "onboard"
+            ]
+          },
+          {
+            "merchantIn": "gambling_mcc"
+          },
+          {
+            "merchantIn": "cube_excluded_investment_fx_crypto_mcc"
+          }
+        ]
+      },
+      "effect": "zero",
+      "notes": "醫療事業、博奕、飛機／郵輪上之消費、境外投資平台",
+      "evidenceRefs": [
+        "cube.s1#overseas_definition",
+        "cube.s2#fixed_overseas",
+        "cube.s3#point_terms"
+      ]
+    },
+    {
+      "id": "cube.ex.convenience.general",
+      "appliesTo": [
+        "cube.general",
+        "cube.installment"
+      ],
+      "when": {
+        "merchantIn": "tw_convenience_store"
+      },
+      "effect": "zero",
+      "notes": "官方範例：LINE PAY-7-11 NT$100 為非一般消費 0 點",
+      "evidenceRefs": [
+        "cube.s1#fixed_exclusions",
+        "cube.s2#fixed_domestic",
+        "cube.s3#point_terms"
+      ]
+    },
+    {
+      "id": "cube.ex.pxmart.general",
+      "appliesTo": [
+        "cube.general",
+        "cube.installment"
+      ],
+      "when": {
+        "merchantIn": "pxmart_group"
+      },
+      "effect": "zero",
+      "evidenceRefs": [
+        "cube.s1#fixed_exclusions",
+        "cube.s2#fixed_domestic",
+        "cube.s3#point_terms"
+      ]
+    },
+    {
+      "id": "cube.ex.micropay.general",
+      "appliesTo": [
+        "cube.general",
+        "cube.installment"
+      ],
+      "when": {
+        "issuerDecision": "透過聯合信用卡處理中心小額支付平台之特約商店消費（如便利超商、連鎖速食店、停車費）"
+      },
+      "effect": "zero",
+      "notes": "是否走小額支付平台只有銀行收單資料能判斷，不以商家名稱推定",
+      "evidenceRefs": [
+        "cube.s1#fixed_exclusions",
+        "cube.s2#fixed_domestic",
+        "cube.s3#point_terms"
+      ]
+    },
+    {
+      "id": "cube.ex.non_purchase.general",
+      "appliesTo": [
+        "cube.general",
+        "cube.installment"
+      ],
+      "when": {
+        "spendType": [
+          "tax",
+          "tuition",
+          "utility",
+          "government",
+          "topup",
+          "storedValue",
+          "fee",
+          "cashAdvance"
+        ]
+      },
+      "effect": "zero",
+      "notes": "稅款、學費、公用事業費用、公務機關與繳費平台、各類加值、信用卡利息與手續費、預借現金",
+      "evidenceRefs": [
+        "cube.s1#fixed_exclusions",
+        "cube.s2#fixed_domestic",
+        "cube.s3#point_terms"
+      ]
+    },
+    {
+      "id": "cube.ex.mcc_domestic.general",
+      "appliesTo": [
+        "cube.general",
+        "cube.installment"
+      ],
+      "when": {
+        "any": [
+          {
+            "merchantIn": "cube_excluded_investment_fx_crypto_mcc"
+          },
+          {
+            "merchantIn": "gambling_mcc"
+          }
+        ]
+      },
+      "effect": "zero",
+      "evidenceRefs": [
+        "cube.s1#fixed_exclusions",
+        "cube.s2#fixed_domestic",
+        "cube.s3#point_terms"
+      ]
+    },
+    {
+      "id": "cube.ex.insuranceExcluded",
+      "appliesTo": [
+        "cube.insurance"
+      ],
+      "when": {
+        "issuerDecision": "是否為國泰人壽躉繳、投資型或利率變動型年金保費？"
+      },
+      "effect": "zero",
+      "notes": "S1 與 S3 明列不予回饋；未知時保留 0–0.3% 範圍。",
+      "evidenceRefs": [
+        "cube.s1#general",
+        "cube.s1#rounding",
+        "cube.s1#monthly_cap",
+        "cube.s2#fixed_domestic",
+        "cube.s3#point_terms"
+      ]
+    },
+    {
+      "id": "cube.ex.otherGeneral",
+      "appliesTo": [
+        "cube.general",
+        "cube.installment",
+        "cube.fixed.domestic",
+        "cube.fixed.overseasPhysical"
+      ],
+      "when": {
+        "issuerDecision": "是否為一般消費其他排除：帳單分期、刷卡樂分期、通信貸款、餘額代償、路邊停車、繳費平台、代扣基金、eTag智慧停車、SOGO貴賓廳、國壽租金、未核准投資平台含eToro、匯兌含Wise、銀行另公告排除？"
+      },
+      "effect": "zero",
+      "notes": "一般消費其他排除亦適用固定國內；固定海外依小樹點累積辦法與相關公告排除。指定方案明列例外由各類別另判，不套此概括排除。",
+      "evidenceRefs": [
+        "cube.s1#general",
+        "cube.s1#rounding",
+        "cube.s1#monthly_cap",
+        "cube.s2#fixed_domestic",
+        "cube.s3#point_terms",
+        "cube.s1#fixed_exclusions"
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "id": "cube.s1",
+      "sourceCard": "cathay_cube",
+      "url": "https://www.cathay-cube.com.tw/content/cub-aem-cs/zh-tw/cathaybk/personal/product/credit-card/cards/cube.model.json",
+      "role": "primary",
+      "format": "aemModel",
+      "approvedSha256": "121c6c0bc2de441f65553c3f5e125882e51cdcd92d41d3eb32274193b3df128b",
+      "anchors": {
+        "fixed_rules": {
+          "pointer": "/:items/root/:items/responsivegrid/:items/cub_main/:items/cub_simplegraphic/basicContent/paragraphNotice/noticeContent",
+          "contains": "「固定回饋」權益方案切換規則"
+        },
+        "fixed_exclusions": {
+          "pointer": "/:items/root/:items/responsivegrid/:items/cub_main/:items/cub_simplegraphic/basicContent/paragraphNotice/noticeContent",
+          "contains": "聯合信用卡處理中心"
+        },
+        "overseas_definition": {
+          "pointer": "/:items/root/:items/responsivegrid/:items/cub_main/:items/cub_simplegraphic/basicContent/paragraphNotice/noticeContent",
+          "contains": "儲值不列入計算"
+        },
+        "rounding": {
+          "pointer": "/:items/root/:items/responsivegrid/:items/cub_main/:items/cub_notice_copy/text",
+          "contains": "依小數點第一位四捨五入至整數位"
+        },
+        "monthly_cap": {
+          "pointer": "/:items/root/:items/responsivegrid/:items/cub_main/:items/cub_notice_copy/text",
+          "contains": "加計新臺幣50萬元為限"
+        },
+        "general": {
+          "pointer": "/:items/root/:items/responsivegrid/:items/cub_main/:items/cub_notice_copy/text",
+          "contains": "一般消費」係排除"
+        },
+        "routes": {
+          "pointer": "/:items/root/:items/responsivegrid/:items/cub_main/:items/cub_notice_copy/text",
+          "contains": "各項回饋若未敍明"
+        },
+        "levels": {
+          "pointer": "/:items/root/:items/responsivegrid/:items/cub_main/:items/cub_comparecards_cop/paragraphNotice/noticeContent",
+          "contains": "Level 3"
+        }
+      },
+      "approval": {
+        "by": "S-1 migration; digest copied from reward_feed/calculation_approvals.json",
+        "at": "2026-10-24T15:37:31+08:00",
+        "note": "指紋沿用 C-01／C-02 已核准版本，本檔不新增核准；兩者一致性由 test_rules_v2_cube 檢查"
+      }
+    },
+    {
+      "id": "cube.s2",
+      "sourceCard": "cathay_cube",
+      "url": "https://www.cathay-cube.com.tw/content/cub-aem-cs/zh-tw/cathaybk/personal/product/credit-card/cards/cube-list.model.json",
+      "role": "supporting",
+      "format": "aemModel",
+      "approvedSha256": "827fffb1916348a4d4e85062cd1fa658035033663b2e168a73e93cfa176ffb64",
+      "anchors": {
+        "fixed_domestic": {
+          "pointer": "/:items/root/:items/responsivegrid/:items/cub_main/:items/cub_experiencefragme_372861707/experienceFragment/:items/root/:items/cub_cubelisttitle_co/:items/cub_cubelist_6312897_538970282/categoryName",
+          "contains": "一般消費(不含保費) 1.2%"
+        },
+        "fixed_overseas": {
+          "pointer": "/:items/root/:items/responsivegrid/:items/cub_main/:items/cub_experiencefragme_372861707/experienceFragment/:items/root/:items/cub_cubelisttitle_co/:items/cub_cubelist_1315495/categoryName",
+          "contains": "指定海外消費 2.5%"
+        },
+        "autumn_japan_title": {
+          "pointer": "/:items/root/:items/responsivegrid/:items/cub_main/:items/cub_experiencefragme_227985757/experienceFragment/:items/root/:items/cub_cubelisttitle_co/mainTitle",
+          "contains": "秋日遊"
+        },
+        "autumn_japan_notice": {
+          "pointer": "/:items/root/:items/responsivegrid/:items/cub_main/:items/cub_experiencefragme_227985757/experienceFragment/:items/root/:items/cub_cubelisttitle_co/paragraphNoticeContent",
+          "contains": "CUBE信用卡「秋日"
+        },
+        "autumn_japan_c0": {
+          "pointer": "/:items/root/:items/responsivegrid/:items/cub_main/:items/cub_experiencefragme_227985757/experienceFragment/:items/root/:items/cub_cubelisttitle_co/:items/cub_cubelist_6160234/categoryName",
+          "contains": "日本必逛＋遊日必備之指定消費 3.5%"
+        },
+        "autumn_japan_c1": {
+          "pointer": "/:items/root/:items/responsivegrid/:items/cub_main/:items/cub_experiencefragme_227985757/experienceFragment/:items/root/:items/cub_cubelisttitle_co/:items/cub_cubelist_1315495_1263175720/categoryName",
+          "contains": "日本四大機場指定免稅店 4%"
+        },
+        "autumn_japan_c2": {
+          "pointer": "/:items/root/:items/responsivegrid/:items/cub_main/:items/cub_experiencefragme_227985757/experienceFragment/:items/root/:items/cub_cubelisttitle_co/:items/cub_cubelist_1315495/categoryName",
+          "contains": "日本IP專賣店 / 人氣愛店 / 餐廳預約平台  5%"
+        },
+        "autumn_japan_c3": {
+          "pointer": "/:items/root/:items/responsivegrid/:items/cub_main/:items/cub_experiencefragme_227985757/experienceFragment/:items/root/:items/cub_cubelisttitle_co/:items/cub_cubelist_1728141_510155689/categoryName",
+          "contains": "海外旅遊規劃 ( 機票、訂房、行程) 3~5%"
+        },
+        "autumn_japan_c4": {
+          "pointer": "/:items/root/:items/responsivegrid/:items/cub_main/:items/cub_experiencefragme_227985757/experienceFragment/:items/root/:items/cub_cubelisttitle_co/:items/cub_cubelist_1728141_928494793/categoryName",
+          "contains": "國內日系質感飯店 5%"
+        },
+        "autumn_japan_c5": {
+          "pointer": "/:items/root/:items/responsivegrid/:items/cub_main/:items/cub_experiencefragme_227985757/experienceFragment/:items/root/:items/cub_cubelisttitle_co/:items/cub_cubelist_1728141_953230018/categoryName",
+          "contains": "國內日系購物名店 3~8%"
+        },
+        "autumn_japan_c6": {
+          "pointer": "/:items/root/:items/responsivegrid/:items/cub_main/:items/cub_experiencefragme_227985757/experienceFragment/:items/root/:items/cub_cubelisttitle_co/:items/cub_cubelist_1728141_610126650/categoryName",
+          "contains": "國內日系美食饗宴 3.5~8%"
+        },
+        "formosa_title": {
+          "pointer": "/:items/root/:items/responsivegrid/:items/cub_main/:items/cub_experiencefragme/experienceFragment/:items/root/:items/cub_cubelisttitle_co/mainTitle",
+          "contains": "台塑家"
+        },
+        "formosa_notice": {
+          "pointer": "/:items/root/:items/responsivegrid/:items/cub_main/:items/cub_experiencefragme/experienceFragment/:items/root/:items/cub_cubelisttitle_co/paragraphNoticeContent",
+          "contains": "「台塑家」權益方案適"
+        },
+        "formosa_c0": {
+          "pointer": "/:items/root/:items/responsivegrid/:items/cub_main/:items/cub_experiencefragme/experienceFragment/:items/root/:items/cub_cubelisttitle_co/:items/cub_cubelist_6312897_538970282/categoryName",
+          "contains": "加油站"
+        },
+        "formosa_c1": {
+          "pointer": "/:items/root/:items/responsivegrid/:items/cub_main/:items/cub_experiencefragme/experienceFragment/:items/root/:items/cub_cubelisttitle_co/:items/cub_cubelist_1315495804/categoryName",
+          "contains": "健康生活"
+        },
+        "formosa_c2": {
+          "pointer": "/:items/root/:items/responsivegrid/:items/cub_main/:items/cub_experiencefragme/experienceFragment/:items/root/:items/cub_cubelisttitle_co/:items/cub_cubelist_1728141423/categoryName",
+          "contains": "指定超商"
+        },
+        "pxpay_title": {
+          "pointer": "/:items/root/:items/responsivegrid/:items/cub_main/:items/cub_experiencefragme_1955560120/experienceFragment/:items/root/:items/cub_cubelisttitle_co/mainTitle",
+          "contains": "全支付"
+        },
+        "pxpay_notice": {
+          "pointer": "/:items/root/:items/responsivegrid/:items/cub_main/:items/cub_experiencefragme_1955560120/experienceFragment/:items/root/:items/cub_cubelisttitle_co/paragraphNoticeContent",
+          "contains": "「全支付」權益方案適"
+        },
+        "pxpay_supermarket": {
+          "pointer": "/:items/root/:items/responsivegrid/:items/cub_main/:items/cub_experiencefragme_1955560120/experienceFragment/:items/root/:items/cub_cubelisttitle_co/:items/cub_cubelist_1315495804/categoryName",
+          "contains": "量販超市"
+        },
+        "pxpay_partners": {
+          "pointer": "/:items/root/:items/responsivegrid/:items/cub_main/:items/cub_experiencefragme_1955560120/experienceFragment/:items/root/:items/cub_cubelisttitle_co/:items/cub_cubelist_616023404/categoryName",
+          "contains": "全支付國內通路"
+        },
+        "digital_title": {
+          "pointer": "/:items/root/:items/responsivegrid/:items/cub_main/:items/cub_experiencefragme_353283357/experienceFragment/:items/root/:items/cub_cubelisttitle_co/mainTitle",
+          "contains": "玩數位"
+        },
+        "digital_notice": {
+          "pointer": "/:items/root/:items/responsivegrid/:items/cub_main/:items/cub_experiencefragme_353283357/experienceFragment/:items/root/:items/cub_cubelisttitle_co/paragraphNoticeContent",
+          "contains": "指定線上消費"
+        },
+        "digital_ai": {
+          "pointer": "/:items/root/:items/responsivegrid/:items/cub_main/:items/cub_experiencefragme_353283357/experienceFragment/:items/root/:items/cub_cubelisttitle_co/:items/cub_cubelist_616023404/categoryName",
+          "contains": "AI工具"
+        },
+        "digital_streaming": {
+          "pointer": "/:items/root/:items/responsivegrid/:items/cub_main/:items/cub_experiencefragme_353283357/experienceFragment/:items/root/:items/cub_cubelisttitle_co/:items/cub_cubelist_1315495804/categoryName",
+          "contains": "數位/串流平台"
+        },
+        "digital_shopping": {
+          "pointer": "/:items/root/:items/responsivegrid/:items/cub_main/:items/cub_experiencefragme_353283357/experienceFragment/:items/root/:items/cub_cubelisttitle_co/:items/cub_cubelist_631289756/categoryName",
+          "contains": "網購平台"
+        },
+        "digital_international": {
+          "pointer": "/:items/root/:items/responsivegrid/:items/cub_main/:items/cub_experiencefragme_353283357/experienceFragment/:items/root/:items/cub_cubelisttitle_co/:items/cub_cubelist_1728141423/categoryName",
+          "contains": "國際電商"
+        },
+        "dining_shopping_title": {
+          "pointer": "/:items/root/:items/responsivegrid/:items/cub_main/:items/cub_experiencefragme_1462845899/experienceFragment/:items/root/:items/cub_cubelisttitle_co/mainTitle",
+          "contains": "樂饗購"
+        },
+        "dining_shopping_notice": {
+          "pointer": "/:items/root/:items/responsivegrid/:items/cub_main/:items/cub_experiencefragme_1462845899/experienceFragment/:items/root/:items/cub_cubelisttitle_co/paragraphNoticeContent",
+          "contains": "指定美食/購物消費"
+        },
+        "dining_shopping_department": {
+          "pointer": "/:items/root/:items/responsivegrid/:items/cub_main/:items/cub_experiencefragme_1462845899/experienceFragment/:items/root/:items/cub_cubelisttitle_co/:items/cub_cubelist_1315495/categoryName",
+          "contains": "國內指定百貨"
+        },
+        "dining_shopping_delivery": {
+          "pointer": "/:items/root/:items/responsivegrid/:items/cub_main/:items/cub_experiencefragme_1462845899/experienceFragment/:items/root/:items/cub_cubelisttitle_co/:items/cub_cubelist_631289756/categoryName",
+          "contains": "國內外送平台"
+        },
+        "dining_shopping_restaurants": {
+          "pointer": "/:items/root/:items/responsivegrid/:items/cub_main/:items/cub_experiencefragme_1462845899/experienceFragment/:items/root/:items/cub_cubelisttitle_co/:items/cub_cubelist_1728141423/categoryName",
+          "contains": "國內餐飲"
+        },
+        "dining_shopping_drugstore": {
+          "pointer": "/:items/root/:items/responsivegrid/:items/cub_main/:items/cub_experiencefragme_1462845899/experienceFragment/:items/root/:items/cub_cubelisttitle_co/:items/cub_cubelist_616023404/categoryName",
+          "contains": "國內藥妝"
+        },
+        "travel_title": {
+          "pointer": "/:items/root/:items/responsivegrid/:items/cub_main/:items/cub_experiencefragme_1916958314/experienceFragment/:items/root/:items/cub_cubelisttitle_co/mainTitle",
+          "contains": "趣旅行"
+        },
+        "travel_notice": {
+          "pointer": "/:items/root/:items/responsivegrid/:items/cub_main/:items/cub_experiencefragme_1916958314/experienceFragment/:items/root/:items/cub_cubelisttitle_co/paragraphNoticeContent",
+          "contains": "指定旅遊/交通消費"
+        },
+        "travel_overseas": {
+          "pointer": "/:items/root/:items/responsivegrid/:items/cub_main/:items/cub_experiencefragme_1916958314/experienceFragment/:items/root/:items/cub_cubelisttitle_co/:items/cub_cubelist_1315495804/categoryName",
+          "contains": "指定海外消費"
+        },
+        "travel_japan_parks": {
+          "pointer": "/:items/root/:items/responsivegrid/:items/cub_main/:items/cub_experiencefragme_1916958314/experienceFragment/:items/root/:items/cub_cubelisttitle_co/:items/cub_cubelist_631289756/categoryName",
+          "contains": "日本指定遊樂園"
+        },
+        "travel_transport": {
+          "pointer": "/:items/root/:items/responsivegrid/:items/cub_main/:items/cub_experiencefragme_1916958314/experienceFragment/:items/root/:items/cub_cubelisttitle_co/:items/cub_cubelist_1728141423/categoryName",
+          "contains": "指定國內外交通"
+        },
+        "travel_airlines": {
+          "pointer": "/:items/root/:items/responsivegrid/:items/cub_main/:items/cub_experiencefragme_1916958314/experienceFragment/:items/root/:items/cub_cubelisttitle_co/:items/cub_cubelist_616023404/categoryName",
+          "contains": "指定航空公司"
+        },
+        "travel_hotels": {
+          "pointer": "/:items/root/:items/responsivegrid/:items/cub_main/:items/cub_experiencefragme_1916958314/experienceFragment/:items/root/:items/cub_cubelisttitle_co/:items/cub_cubelist_2016399573/categoryName",
+          "contains": "指定飯店住宿"
+        },
+        "travel_booking": {
+          "pointer": "/:items/root/:items/responsivegrid/:items/cub_main/:items/cub_experiencefragme_1916958314/experienceFragment/:items/root/:items/cub_cubelisttitle_co/:items/cub_cubelist/categoryName",
+          "contains": "指定旅遊/訂房平台"
+        },
+        "travel_agency": {
+          "pointer": "/:items/root/:items/responsivegrid/:items/cub_main/:items/cub_experiencefragme_1916958314/experienceFragment/:items/root/:items/cub_cubelisttitle_co/:items/cub_cubelist_874726023/categoryName",
+          "contains": "指定旅行社"
+        },
+        "select_title": {
+          "pointer": "/:items/root/:items/responsivegrid/:items/cub_main/:items/cub_experiencefragme_577432954/experienceFragment/:items/root/:items/cub_cubelisttitle_co/mainTitle",
+          "contains": "集精選"
+        },
+        "select_notice": {
+          "pointer": "/:items/root/:items/responsivegrid/:items/cub_main/:items/cub_experiencefragme_577432954/experienceFragment/:items/root/:items/cub_cubelisttitle_co/paragraphNoticeContent",
+          "contains": "指定品牌/生活消費"
+        },
+        "select_charging": {
+          "pointer": "/:items/root/:items/responsivegrid/:items/cub_main/:items/cub_experiencefragme_577432954/experienceFragment/:items/root/:items/cub_cubelisttitle_co/:items/cub_cubelist_6312897_538970282/categoryName",
+          "contains": "充電站"
+        },
+        "select_parking": {
+          "pointer": "/:items/root/:items/responsivegrid/:items/cub_main/:items/cub_experiencefragme_577432954/experienceFragment/:items/root/:items/cub_cubelisttitle_co/:items/cub_cubelist_6312897/categoryName",
+          "contains": "停車費"
+        },
+        "select_supermarket": {
+          "pointer": "/:items/root/:items/responsivegrid/:items/cub_main/:items/cub_experiencefragme_577432954/experienceFragment/:items/root/:items/cub_cubelisttitle_co/:items/cub_cubelist_1315495804/categoryName",
+          "contains": "量販超市"
+        },
+        "select_fuel": {
+          "pointer": "/:items/root/:items/responsivegrid/:items/cub_main/:items/cub_experiencefragme_577432954/experienceFragment/:items/root/:items/cub_cubelisttitle_co/:items/cub_cubelist_631289756/categoryName",
+          "contains": "指定加油"
+        },
+        "select_convenience": {
+          "pointer": "/:items/root/:items/responsivegrid/:items/cub_main/:items/cub_experiencefragme_577432954/experienceFragment/:items/root/:items/cub_cubelisttitle_co/:items/cub_cubelist_1728141423/categoryName",
+          "contains": "指定超商"
+        },
+        "select_home": {
+          "pointer": "/:items/root/:items/responsivegrid/:items/cub_main/:items/cub_experiencefragme_577432954/experienceFragment/:items/root/:items/cub_cubelisttitle_co/:items/cub_cubelist_616023404/categoryName",
+          "contains": "生活家居"
+        },
+        "birthday_title": {
+          "pointer": "/:items/root/:items/responsivegrid/:items/cub_main/:items/cub_experiencefragme_1388148381/experienceFragment/:items/root/:items/cub_cubelisttitle_co_1581592217/mainTitle",
+          "contains": "慶生月"
+        },
+        "birthday_notice": {
+          "pointer": "/:items/root/:items/responsivegrid/:items/cub_main/:items/cub_experiencefragme_1388148381/experienceFragment/:items/root/:items/cub_cubelisttitle_co_1581592217/paragraphNoticeContent",
+          "contains": "當月壽星獨享「慶生月"
+        },
+        "birthday_c0": {
+          "pointer": "/:items/root/:items/responsivegrid/:items/cub_main/:items/cub_experiencefragme_1388148381/experienceFragment/:items/root/:items/cub_cubelisttitle_co_1581592217/:items/cub_cubelist_1315495/categoryName",
+          "contains": "慶生月活動"
+        },
+        "birthday_c1": {
+          "pointer": "/:items/root/:items/responsivegrid/:items/cub_main/:items/cub_experiencefragme_1388148381/experienceFragment/:items/root/:items/cub_cubelisttitle_co_1581592217/:items/cub_cubelist_2016399_1553075193/categoryName",
+          "contains": "口碑名店聚餐首選，熱鬧慶生  10%"
+        },
+        "birthday_c2": {
+          "pointer": "/:items/root/:items/responsivegrid/:items/cub_main/:items/cub_experiencefragme_1388148381/experienceFragment/:items/root/:items/cub_cubelisttitle_co_1581592217/:items/cub_cubelist_2016399_2089826548/categoryName",
+          "contains": "中西式佳餚、火鍋， 豐富美味   10%"
+        },
+        "birthday_c3": {
+          "pointer": "/:items/root/:items/responsivegrid/:items/cub_main/:items/cub_experiencefragme_1388148381/experienceFragment/:items/root/:items/cub_cubelisttitle_co_1581592217/:items/cub_cubelist_2016399_733788314/categoryName",
+          "contains": "主廚演繹料理魅力， 沉浸感動   10%"
+        },
+        "birthday_c4": {
+          "pointer": "/:items/root/:items/responsivegrid/:items/cub_main/:items/cub_experiencefragme_1388148381/experienceFragment/:items/root/:items/cub_cubelisttitle_co_1581592217/:items/cub_cubelist_2016399573/categoryName",
+          "contains": "精選人氣餐廳及甜點咖啡   10%"
+        },
+        "birthday_c5": {
+          "pointer": "/:items/root/:items/responsivegrid/:items/cub_main/:items/cub_experiencefragme_1388148381/experienceFragment/:items/root/:items/cub_cubelisttitle_co_1581592217/:items/cub_cubelist_631289756/categoryName",
+          "contains": "日本指定樂園、遊戲及旅遊時光   3.5%/10%"
+        },
+        "birthday_c6": {
+          "pointer": "/:items/root/:items/responsivegrid/:items/cub_main/:items/cub_experiencefragme_1388148381/experienceFragment/:items/root/:items/cub_cubelisttitle_co_1581592217/:items/cub_cubelist_1315495804/categoryName",
+          "contains": "歌聲暢快身心及 都會享樂體驗   5%/10%"
+        },
+        "birthday_c7": {
+          "pointer": "/:items/root/:items/responsivegrid/:items/cub_main/:items/cub_experiencefragme_1388148381/experienceFragment/:items/root/:items/cub_cubelisttitle_co_1581592217/:items/cub_cubelist/categoryName",
+          "contains": "購物盡興外送便利，增添精彩    3.5%"
+        },
+        "kids_title": {
+          "pointer": "/:items/root/:items/responsivegrid/:items/cub_main/:items/cub_experiencefragme_952464071/experienceFragment/:items/root/:items/cub_cubelisttitle_co/mainTitle",
+          "contains": "童樂匯"
+        },
+        "kids_notice": {
+          "pointer": "/:items/root/:items/responsivegrid/:items/cub_main/:items/cub_experiencefragme_952464071/experienceFragment/:items/root/:items/cub_cubelisttitle_co/paragraphNoticeContent",
+          "contains": "「童樂匯」權益適用期"
+        },
+        "kids_c0": {
+          "pointer": "/:items/root/:items/responsivegrid/:items/cub_main/:items/cub_experiencefragme_952464071/experienceFragment/:items/root/:items/cub_cubelisttitle_co/:items/cub_cubelist_1315495804/categoryName",
+          "contains": "如何解鎖童樂匯？"
+        },
+        "kids_c1": {
+          "pointer": "/:items/root/:items/responsivegrid/:items/cub_main/:items/cub_experiencefragme_952464071/experienceFragment/:items/root/:items/cub_cubelisttitle_co/:items/cub_cubelist_2002624_1534965544/categoryName",
+          "contains": "保費 1%"
+        },
+        "kids_c2": {
+          "pointer": "/:items/root/:items/responsivegrid/:items/cub_main/:items/cub_experiencefragme_952464071/experienceFragment/:items/root/:items/cub_cubelisttitle_co/:items/cub_cubelist_2002624/categoryName",
+          "contains": "指定私校學費 1%"
+        },
+        "kids_c3": {
+          "pointer": "/:items/root/:items/responsivegrid/:items/cub_main/:items/cub_experiencefragme_952464071/experienceFragment/:items/root/:items/cub_cubelisttitle_co/:items/cub_cubelist_2016399573/categoryName",
+          "contains": "親子餐廳 5%"
+        },
+        "kids_c4": {
+          "pointer": "/:items/root/:items/responsivegrid/:items/cub_main/:items/cub_experiencefragme_952464071/experienceFragment/:items/root/:items/cub_cubelisttitle_co/:items/cub_cubelist_631289756/categoryName",
+          "contains": "親子育樂5%"
+        },
+        "kids_c5": {
+          "pointer": "/:items/root/:items/responsivegrid/:items/cub_main/:items/cub_experiencefragme_952464071/experienceFragment/:items/root/:items/cub_cubelisttitle_co/:items/cub_cubelist_2016399/categoryName",
+          "contains": "親子飯店 5%"
+        },
+        "kids_c6": {
+          "pointer": "/:items/root/:items/responsivegrid/:items/cub_main/:items/cub_experiencefragme_952464071/experienceFragment/:items/root/:items/cub_cubelisttitle_co/:items/cub_cubelist_2002624964/categoryName",
+          "contains": "母嬰用品店 5%"
+        },
+        "kids_c7": {
+          "pointer": "/:items/root/:items/responsivegrid/:items/cub_main/:items/cub_experiencefragme_952464071/experienceFragment/:items/root/:items/cub_cubelisttitle_co/:items/cub_cubelist_616023404/categoryName",
+          "contains": "五感體驗課 10%"
+        },
+        "kids_c8": {
+          "pointer": "/:items/root/:items/responsivegrid/:items/cub_main/:items/cub_experiencefragme_952464071/experienceFragment/:items/root/:items/cub_cubelisttitle_co/:items/cub_cubelist_1728141423/categoryName",
+          "contains": "嬰幼童品牌官網 10%"
+        }
+      },
+      "approval": {
+        "by": "S-1 migration; digest copied from reward_feed/calculation_support_approvals.json",
+        "at": "2026-10-24T15:37:31+08:00",
+        "note": "指紋沿用 C-01／C-02 已核准版本，本檔不新增核准；兩者一致性由 test_rules_v2_cube 檢查"
+      }
+    },
+    {
+      "id": "cube.s3",
+      "sourceCard": "cathay_cube",
+      "url": "https://www.cathay-cube.com.tw/content/cub-aem-cs/zh-tw/cathaybk/personal/event/overview/credit-card/bonus/rule/conditions.model.json",
+      "role": "supporting",
+      "format": "aemModel",
+      "approvedSha256": "f8819f5071c9f9147acf4e830c7d80b8f428e7f7760890e87d7d4424eefc6fc5",
+      "anchors": {
+        "point_terms": {
+          "pointer": "/:items/root/:items/responsivegrid/:items/cub_main/:items/cub_textb/text",
+          "contains": "一卡通加值"
+        }
+      },
+      "approval": {
+        "by": "S-1 migration; digest copied from reward_feed/calculation_support_approvals.json",
+        "at": "2026-10-24T15:37:31+08:00",
+        "note": "指紋沿用 C-01／C-02 已核准版本，本檔不新增核准；兩者一致性由 test_rules_v2_cube 檢查"
+      }
+    }
+  ]
+}

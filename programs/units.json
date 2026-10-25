@@ -1,0 +1,28 @@
+[
+  {
+    "id": "cube_points",
+    "label": "小樹點(信用卡)",
+    "twdValue": "1",
+    "cashEquivalent": "restricted",
+    "redemptionNote": "官方：點數價值為 1 點等值 NT$1；折抵方式依國泰小樹點(信用卡)累積辦法"
+  },
+  {
+    "id": "costco_gold",
+    "label": "好多金",
+    "twdValue": "1",
+    "cashEquivalent": "restricted",
+    "redemptionNote": "每1元折抵1元台灣Costco會費；實體賣場消費限每年1–2月或另公告期間，不含MyCharge電動車充電站。不得要求折現；需於刷卡前告知，依官方到期順序折抵。",
+    "expiry": {
+      "rule": "annualReset",
+      "resetOn": "03-31",
+      "accrualWindow": "prevYear02-01..thisYear01-31"
+    }
+  },
+  {
+    "id": "fubon_card_credit",
+    "label": "富邦刷卡金",
+    "twdValue": "1",
+    "cashEquivalent": "yes",
+    "redemptionNote": "鐵路加碼撥入正卡信用卡帳戶抵卡費；不可要求兌換現金或其他贈品，不與好多金合計。"
+  }
+]

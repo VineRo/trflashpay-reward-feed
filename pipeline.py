@@ -17,6 +17,8 @@ from pathlib import Path
 from urllib.parse import urlparse
 
 LIMIT = 2 * 1024 * 1024
+CUBE_SCHEME_URL = 'https://www.cathay-cube.com.tw/content/cub-aem-cs/zh-tw/cathaybk/personal/product/credit-card/cards/cube-list.model.json'
+CUBE_POINT_TERMS_URL = 'https://www.cathay-cube.com.tw/content/cub-aem-cs/zh-tw/cathaybk/personal/event/overview/credit-card/bonus/rule/conditions.model.json'
 
 
 class VisibleText(HTMLParser):
@@ -75,7 +77,8 @@ def normalize_aem_model(data, expected_title="CUBE信用卡"):
 class SameHostRedirect(urllib.request.HTTPRedirectHandler):
     def redirect_request(self, req, fp, code, msg, headers, newurl):
         old, new = urlparse(req.full_url), urlparse(newurl)
-        if new.scheme != 'https' or new.hostname != old.hostname:
+        if (new.scheme != 'https' or new.hostname != old.hostname
+                or new.username or new.password):
             raise ValueError('Unapproved redirect: update the source after review')
         return super().redirect_request(req, fp, code, msg, headers, newurl)
 
@@ -116,9 +119,28 @@ def fetch_proof(url):
     request = urllib.request.Request(url, headers={'User-Agent': 'TRFlashPay-Official-Rules-Monitor/1.0'})
     with urllib.request.build_opener(SameHostRedirect()).open(request, timeout=20) as response:
         data = response.read(LIMIT + 1)
-        if response.status != 200 or len(data) > LIMIT or not data.startswith(b'%PDF-'):
-            raise ValueError('Official terms document is unavailable or not a bounded PDF')
-        return {'sha256': hashlib.sha256(data).hexdigest(), 'format': 'pdf', 'byteCount': len(data)}
+        if response.status != 200 or len(data) > LIMIT:
+            raise ValueError('Official supporting source is unavailable or too large')
+        return supporting_proof(url, data)
+
+
+def supporting_proof(url, data):
+    """Only explicitly registered models may supply structured evidence."""
+    if len(data) > LIMIT:
+        raise ValueError('Official supporting source exceeds size limit')
+    if url == CUBE_SCHEME_URL:
+        from cube_scheme_inventory import parse_scheme_inventory
+        inventory = parse_scheme_inventory(data)
+        return {'sha256': inventory['modelSha256'], 'format': 'cubeSchemeModel',
+                'byteCount': len(data)}
+    if url == CUBE_POINT_TERMS_URL:
+        from cube_point_terms import parse_point_terms
+        terms = parse_point_terms(data)
+        return {'sha256': terms['modelSha256'], 'format': 'cubePointTermsModel',
+                'byteCount': len(data)}
+    if not data.startswith(b'%PDF-'):
+        raise ValueError('Official terms document is unavailable or not a bounded PDF')
+    return {'sha256': hashlib.sha256(data).hexdigest(), 'format': 'pdf', 'byteCount': len(data)}
 
 
 def write_json(path, value):
@@ -185,7 +207,7 @@ def compile_rules(approved, evidence, now=None):
     return rules
 
 
-def build_feed(approved, evidence, coverage, now=None, wallet_evidence=None):
+def build_feed(approved, evidence, coverage, now=None, wallet_evidence=None, programs=None):
     now = now or datetime.now(timezone.utc)
     if not isinstance(coverage, list) or not coverage or len(set(coverage)) != len(coverage):
         raise ValueError('Invalid managed catalog')
@@ -222,7 +244,16 @@ def build_feed(approved, evidence, coverage, now=None, wallet_evidence=None):
         validate_profile(profile, cid)
     from wallet_campaigns import build_wallet_campaigns
     campaigns, campaign_pending = build_wallet_campaigns(wallet_evidence or {}, now)
+    # Schema v2 programs ride alongside the v1 feed: installed apps require
+    # schemaVersion 1 and ignore unknown top-level keys.
+    v2 = {}
+    if programs is not None:
+        from rules_v2 import PROGRAMS_SCHEMA_VERSION, build_programs
+        published, program_pending = build_programs(programs, evidence, now)
+        v2 = {'programsSchemaVersion': PROGRAMS_SCHEMA_VERSION, 'rewardUnits': programs['rewardUnits'],
+              'merchantSets': programs['merchantSets'], 'programs': published, 'programPending': program_pending}
     return {
+        **v2,
         'walletCampaigns': campaigns, 'walletCampaignPending': campaign_pending,
         'assessmentProfiles': profiles,
         'schemaVersion': 1,
@@ -241,13 +272,19 @@ def main():
     parser.add_argument('--root', type=Path, default=Path(__file__).parent)
     args = parser.parse_args()
     root = args.root
-    evidence = collect(json.loads((root / 'sources.json').read_text()))
+    registry = json.loads((root / 'sources.json').read_text())
+    from rules_v2 import check_sources, load_catalog, validate_catalog
+    programs = load_catalog(root / 'programs')
+    validate_catalog(programs)
+    check_sources(programs, registry)
+    evidence = collect(registry)
     write_json(root / 'artifacts' / 'evidence.json', evidence)
     wallet_evidence = collect(json.loads((root / 'wallet_sources.json').read_text()))
     write_json(root / 'artifacts' / 'wallet_evidence.json', wallet_evidence)
     if args.publish:
         feed = build_feed(json.loads((root / 'approved.json').read_text()), evidence,
-                          json.loads((root / 'catalog.json').read_text()), wallet_evidence=wallet_evidence)
+                          json.loads((root / 'catalog.json').read_text()), wallet_evidence=wallet_evidence,
+                          programs=programs)
         from eligibility_audit import build_eligibility_audit
         audit = build_eligibility_audit(feed, evidence)
         write_json(root / 'public' / 'eligibility-audit.json', audit)

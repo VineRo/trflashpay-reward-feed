@@ -68,7 +68,7 @@ UNMODELED = {
  'federal_jihe':['雖有四捨五入條款，但正附卡合併及每月入帳結算的取整單位仍待釐清；不可假設每筆或直接以整月淨額計算','日本、日系名店、新戶自扣與餐廳現折是獨立活動，尚未合併建模'],
  'taishin_richart_debit':['公告說明每卡、入帳日及每月結算，但未明列小數取整規則，僅提供名目比例','青年、新戶、指定支付加碼與入帳後退款調整另行核對'],
  'sinopac_sport':['基本 0.3% 與電子帳單加碼 0.7% 僅判斷名目比例；兩部分取整及結算方式尚待核對','DACARD、有效運動資料、運動達標、自扣、指定支付與共用額度應分別確認；運動及指定通路加碼未建模','豐點與紅利依帳單折抵設定轉換，不直接視為現金入帳'],
- 'cathay_cube':['僅固定回饋之國內非保費一般消費；其他每日切換方案、等級、指定通路與優惠券尚未建模','海外實體、保費、分期、跨月額度及超額後回饋不在本模型；不得把 1.2% 套用所有交易'],
+ 'cathay_cube':['僅固定回饋之國內與指定海外實體非保費一般消費；其他每日切換方案、等級、指定通路與優惠券尚未建模','海外僅限固定方案已確認之面對面過卡或指定感應刷卡；保費、分期、跨月額度及超額後回饋不在本模型，不自動疊加其他回饋'],
  'cathay_debit':['已取得 CUBE 簽帳金融卡 2026/1/1–12/31 一般消費 0.3% 官方內容模型；尚未建立計算公式','產品頁連結的小樹點累積辦法主要敘述信用卡；簽帳卡專用一般消費排除、取整及結算單位仍須確認，不直接沿用信用卡規則'],
  'chb_my_happy':['現有基本權益頁缺可驗證有效期間，尚不發布數值模型','數位帳戶、自扣、餘額、每月登錄、六大通路認列及正附卡共用上限須逐項核對'],
  'jko_richart_account':['新舊戶、開通日、資料共享授權與存款任務會影響次期權益，尚未取得完整可監測條款','次月 5 日至次次月 4 日的回饋區間、會員等級及使用額度須另外建立模型'],
@@ -93,16 +93,25 @@ def build_profiles(evidence, rules, coverage):
     for cid in coverage:
         source, rule = evidence.get(cid, {}), byid.get(cid)
         items = COMMON + SPECIFIC.get(cid, [])
+        if cid == 'cathay_cube':
+            items = [(i, c, ('本筆符合銀行完整一般消費定義；便利超商、全聯／大全聯、稅費、學費、儲值與小額支付平台等排除項目不適用，不能只按商家名稱認定' if i == 'generalSpend' else l), e)
+                     for i, c, l, e in items]
         supporting = {url: value.get('sha256') for url,value in source.get('supportingSources', {}).items()}
         expected_support = SUPPORT_APPROVALS.get(cid, {})
         digest = source_digest(source.get('sha256'), supporting)
         calculation = None
-        if rule and cid in POLICIES and source.get('sha256') == APPROVALS.get(cid) and supporting == expected_support:
+        sources_available = not source.get('error') and not any(
+            value.get('error') for value in source.get('supportingSources', {}).values())
+        if rule and cid in POLICIES and sources_available and source.get('sha256') == APPROVALS.get(cid) and supporting == expected_support:
             unit, rounding, start, extra = POLICIES[cid]
             kind = KINDS.get(cid,'flatGeneralPlan')
             calculation = {'kind': kind, 'rate': 1.0 if cid in {'esun_ubear','esun_unicard'} else rule['promoRewardRate'],
                 'unit': unit, 'rounding': rounding, 'validFrom': start, 'validUntil': rule['validUntil'],
                 'requiredConditionIds': [i[0] for i in COMMON] + extra}
+            if cid == 'cathay_cube':
+                from pipeline import CUBE_SCHEME_URL, CUBE_POINT_TERMS_URL
+                if {CUBE_SCHEME_URL, CUBE_POINT_TERMS_URL}.issubset(supporting):
+                    calculation['overseasPhysicalRate'] = 2.5
         result[cid] = {
             'version': 1, 'cardId': cid, 'scope': 'limitedGeneralPlan' if rule else 'notModeled',
             'announcementObserved': rule is not None,
@@ -140,12 +149,23 @@ def validate_profile(profile, cid):
     if calc is not None:
         if cid not in POLICIES or not profile['announcementObserved'] or not digest or digest != source_digest(APPROVALS.get(cid), SUPPORT_APPROVALS.get(cid, {})):
             raise ValueError('Unapproved calculation evidence')
-        if not isinstance(calc,dict) or set(calc) != {'kind','rate','unit','rounding','validFrom','validUntil','requiredConditionIds'}:
+        if not isinstance(calc, dict):
+            raise ValueError('Invalid flat calculation schema')
+        allowed = {'kind','rate','unit','rounding','validFrom','validUntil','requiredConditionIds'}
+        if cid == 'cathay_cube' and 'overseasPhysicalRate' in calc:
+            allowed.add('overseasPhysicalRate')
+            from pipeline import CUBE_SCHEME_URL, CUBE_POINT_TERMS_URL
+            if (type(calc['overseasPhysicalRate']) not in (int, float) or calc['overseasPhysicalRate'] != 2.5
+                    or not {CUBE_SCHEME_URL, CUBE_POINT_TERMS_URL}.issubset(SUPPORT_APPROVALS.get(cid, {}))):
+                raise ValueError('Unsupported fixed overseas policy')
+        if not isinstance(calc,dict) or set(calc) != allowed:
             raise ValueError('Invalid flat calculation schema')
         unit, rounding, start, extra = POLICIES[cid]
         expected_kind = KINDS.get(cid,'flatGeneralPlan')
         if calc['kind'] != expected_kind or calc['unit'] != unit or calc['rounding'] != rounding or calc['validFrom'] != start:
             raise ValueError('Unsupported flat calculation policy')
+        if cid == 'cathay_cube' and calc['rate'] != 1.2:
+            raise ValueError('Unsupported fixed domestic policy')
         if cid in {'esun_ubear','esun_unicard'} and calc['rate'] != 1:
             raise ValueError('Unsupported qualified general rate')
         from validator import rate, date

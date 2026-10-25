@@ -9,7 +9,9 @@ class CubeModelTests(unittest.TestCase):
     terms = ('「固定回饋」權益方案適用期間：2026/8/3-2026/12/31。 '
              '一般消費(不含保費)1.2%、海外實體消費2.5%。 '
              '每筆消費請款入帳後依該筆消費之授權日判斷適用權益方案，'
-             '小數點第一位四捨五入至整數位。信用額度加計50萬元。不含CUBE簽帳金融卡。')
+             '小數點第一位四捨五入至整數位。信用額度加計50萬元。不含CUBE簽帳金融卡。'
+             'LINE PAY-屈臣氏 NT$200 一般消費(不含保費) 1.2% 2 (200*1.2%=2.4) '
+             'LINE PAY-7-11 NT$100 非一般消費 0% 0 不得再切換至其他權益 便利超商消費')
 
     def test_authored_text_is_parsed_but_complete_model_changes_revoke_fingerprint(self):
         model = {'title':'CUBE信用卡', ':items':{'main':{'text':'<p>'+self.terms+'</p>',
@@ -42,6 +44,9 @@ class CubeModelTests(unittest.TestCase):
         self.assertTrue(rule['verificationRequiredReason'])
         self.assertNotIn('.model.json',rule['officialUrl'])
         for text in [self.terms.replace('小數點第一位四捨五入至整數位',''),
+                     self.terms.replace('1.2% 2 (200*1.2%', '3% 2 (200*1.2%'),
+                     self.terms.replace('非一般消費 0% 0', '一般消費 1.2% 1'),
+                     self.terms.replace('不得再切換至其他權益', ''),
                      self.terms + '一般消費(不含保費)2%、海外實體消費2.5%。']:
             with self.assertRaises(ValueError): parse(text)
         with self.assertRaises(ValueError):

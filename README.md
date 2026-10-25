@@ -114,3 +114,10 @@ CUBE 已改以官方 AEM model JSON 的公開正文監測（非搜尋快取）�
 `eligibility-audit.json` 與 rules.json 使用相同資料有效期，列出全部 20 個來源的計算模型狀態、完整來源 SHA、每項資格由誰提供、尚未建模的規則，以及已發布支付活動的必填條件。所有交易實際資格均維持未驗證，不把來源可讀、公式存在或測試通過等同個人獲獎資格。缺少任何來源的分類時停止產生稽核表。
 
 已修復 CUBE 簽帳金融卡的官方 AEM 內容來源；該卡與 CUBE 信用卡依 URL 和標題分開驗證，仍不直接套用信用卡取整或累積辦法。
+
+2026-10-24 C-02：CUBE的計算版本另綁定sources.json中的官方S2方案模型。
+支援擷取對明確註冊的cube-list.model.json及小樹點累積辦法conditions.model.json使用專屬結構解析及完整canonical SHA；其餘支援文件仍為PDF。S1、S2或完整累積辦法失敗、缺失或版本不符即撤回calculation；未知欄位變動亦在指紋內。此變更須真正執行並發布更新後管線，遠端舊feed才會取得依賴保護。海外公式尚未發布；範圍與實測見docs/cube_fixed_overseas_scope_20261024.md及audit/c02_cube_overseas_20261024。
+
+2026-10-24 C-02補齊完整小樹點累積辦法監測；信用卡與簽帳卡正文分開，完整模型含未知欄位變更均撤回公式。範圍及本輪82項後端／87項App整合驗證見docs/cube_point_terms_dependency_20261024.md與audit/c02_cube_point_terms_20261024/verification.json。海外公式與操作畫面仍待實作；未發布遠端。
+
+2026-10-24 C-02第六批：固定方案calculation增加可選overseasPhysicalRate=2.5，與原rate=1.2共存；三份來源均須核准，任一撤回則整份公式撤回。App明確選海外，須另填國別／原幣別OR、面對面與實際過卡／感應工具，沿用淨額、取整、方案日期與資格／額度門檻；不改通用promoRewardRate為2.5%。舊七欄只支援國內，不為海外回退1.2%。新欄位與舊App相容／發布仍待核對；本輪未發布。範圍與驗證見docs/cube_fixed_overseas_implementation_20261024.md。
