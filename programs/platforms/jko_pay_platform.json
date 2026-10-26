@@ -3,20 +3,274 @@
   "issuer": "jkopay",
   "name": "街口支付",
   "rewardUnit": "jko_coins",
-  "selectors": [],
-  "exclusions": [],
-  "evidence": [],
+  "selectors": [
+    {
+      "id": "jko.tier",
+      "kind": "tier",
+      "source": "userDeclared",
+      "label": "街口會員等級",
+      "history": true,
+      "values": [
+        "silverPlus",
+        "belowSilver"
+      ]
+    }
+  ],
   "notCovering": [
-    "通路頁面引用街口條款「街口帳戶付款，銀牌以上最高 1% 街口幣」，街口官方活動頁為動態頁（電商活動），本批未保存其官方渲染內容，亦未核對是否適用實體掃碼與會員等級條件；平台層暫未建模。"
+    "綁銀行帳戶或信用卡付款的回饋依各銀行公告（另卡 V2-S8／卡片層），街口平台層未建模。",
+    "官方權益頁未寫結束日：本規則以 2026 年度街口幣發放期間為準，年底需重新核對；繳費、保費等非一般消費未建模。"
   ],
   "rules": [
     {
-      "id": "jkopay.base",
+      "id": "jkopay.account.silverPlus",
       "layer": "L2",
       "kind": "base",
-      "group": "jkopay.main",
+      "group": "jkopay.account",
+      "period": {
+        "from": "2026-01-01T00:00:00+08:00",
+        "to": "2026-12-31T23:59:59.999999+08:00"
+      },
+      "when": {
+        "all": [
+          {
+            "route": {
+              "platform": [
+                "jkoPay"
+              ],
+              "funding": [
+                "storedBalance"
+              ]
+            }
+          },
+          {
+            "presence": "inPerson"
+          },
+          {
+            "spendType": "general"
+          },
+          {
+            "selector": {
+              "jko.tier": "silverPlus"
+            }
+          }
+        ]
+      },
+      "rate": {
+        "type": "fixed",
+        "percent": "1"
+      },
+      "includesBase": false,
+      "unit": "jko_coins",
+      "rounding": {
+        "mode": "unknown",
+        "basis": "perTransaction"
+      },
+      "combinable": {
+        "default": "unknown"
+      },
+      "evidenceRefs": [
+        "jko.rate#account",
+        "jko.rate#rate",
+        "jko.rate#inPerson",
+        "jko.terms#period",
+        "jko.tier#tier"
+      ],
+      "notes": "街口帳戶餘額付款，銀牌以上會員 1% 街口幣、無上限；官方未公告小數處理。"
+    },
+    {
+      "id": "jkopay.account.belowSilver",
+      "layer": "L2",
+      "kind": "base",
+      "group": "jkopay.account",
+      "period": {
+        "from": "2026-01-01T00:00:00+08:00",
+        "to": "2026-12-31T23:59:59.999999+08:00"
+      },
+      "when": {
+        "all": [
+          {
+            "route": {
+              "platform": [
+                "jkoPay"
+              ],
+              "funding": [
+                "storedBalance"
+              ]
+            }
+          },
+          {
+            "presence": "inPerson"
+          },
+          {
+            "spendType": "general"
+          },
+          {
+            "selector": {
+              "jko.tier": "belowSilver"
+            }
+          }
+        ]
+      },
+      "rate": {
+        "type": "upTo",
+        "percent": "1"
+      },
+      "includesBase": false,
+      "unit": "jko_coins",
+      "rounding": {
+        "mode": "unknown",
+        "basis": "perTransaction"
+      },
+      "combinable": {
+        "default": "unknown"
+      },
+      "evidenceRefs": [
+        "jko.rate#account",
+        "jko.rate#rate",
+        "jko.rate#inPerson",
+        "jko.terms#period",
+        "jko.tier#tier"
+      ],
+      "notes": "官方只寫「最高1%」與「銀牌以上 1%」，未達銀牌的比例未公告，以 0–1% 呈現。"
+    },
+    {
+      "id": "jkopay.otherFunding",
+      "layer": "L2",
+      "kind": "base",
+      "group": "jkopay.other",
       "status": "uncovered",
-      "notes": "通路頁面引用街口條款「街口帳戶付款，銀牌以上最高 1% 街口幣」，街口官方活動頁為動態頁（電商活動），本批未保存其官方渲染內容，亦未核對是否適用實體掃碼與會員等級條件；平台層暫未建模。"
+      "notes": "綁銀行帳戶或信用卡付款：官方寫明依各銀行公告，街口平台層未建模。"
     }
-  ]
+  ],
+  "exclusions": [
+    {
+      "id": "jko.ex.channels",
+      "appliesTo": [
+        "jkopay.account.*"
+      ],
+      "when": {
+        "issuerDecision": "這筆是在四大超商（7-ELEVEN 含統一商場、全家、萊爾富、OK 超商）或中華郵政ｉ郵箱消費，或是公益捐款嗎？"
+      },
+      "effect": "zero",
+      "evidenceRefs": [
+        "jko.terms#stores",
+        "jko.terms#locker",
+        "jko.terms#donation",
+        "jko.terms#excluded"
+      ],
+      "notes": "官方「不適用回饋通路」中可能以實體掃碼發生的項目；線上、繳費、保險、儲值等由 presence／spendType 條件排除。"
+    }
+  ],
+  "evidence": [
+    {
+      "id": "jko.rate",
+      "sourceCard": "jko_pay_platform",
+      "url": "https://mkt.jkopay.com/event/jkopayment",
+      "role": "primary",
+      "format": "html",
+      "approvedSha256": "205ae6837caea138accbcb724144d88cd9a8fc0300051ac38322a222fa1ccf1a",
+      "section": {
+        "start": "若選擇使用「 街口帳戶 」",
+        "end": "保險專區、街享券、餐廳訂位等。"
+      },
+      "anchors": {
+        "account": {
+          "pointer": "/text",
+          "contains": "若選擇使用「 街口帳戶 」 餘額付款"
+        },
+        "rate": {
+          "pointer": "/text",
+          "contains": "最高1%街口幣 即時回饋無上限"
+        },
+        "banks": {
+          "pointer": "/text",
+          "contains": "各銀行回饋有所不同"
+        },
+        "inPerson": {
+          "pointer": "/text",
+          "contains": "本權益適用實體店家"
+        }
+      },
+      "approval": {
+        "by": "使用者核准（2026-10-26）",
+        "at": "2026-10-26T11:21:43+08:00",
+        "note": "使用者原話：「Q3 核准 jko.rate 205ae683…、jko.terms b228722a…、jko.tier 9c5669ee…」；段落指紋，渲染方式為預裝 Chrome。"
+      }
+    },
+    {
+      "id": "jko.terms",
+      "sourceCard": "jko_pay_platform",
+      "url": "https://mkt.jkopay.com/event/jkopayment",
+      "role": "primary",
+      "format": "html",
+      "approvedSha256": "b228722a2e4d726b2fd9c255dbcccabb2f49ddd71a2bc31c724738564cccdc0d",
+      "section": {
+        "start": "不適用回饋通路",
+        "end": "無須另行通知。"
+      },
+      "anchors": {
+        "stores": {
+          "pointer": "/text",
+          "contains": "四大超商包含：7-ELEVEN (含統一商場)、全家便利商店、萊爾富、OK 超商"
+        },
+        "donation": {
+          "pointer": "/text",
+          "contains": "「公益捐款」"
+        },
+        "excluded": {
+          "pointer": "/text",
+          "contains": "不適用本回饋。"
+        },
+        "value": {
+          "pointer": "/text",
+          "contains": "1 元街口幣等值新台幣 1 元"
+        },
+        "expiry": {
+          "pointer": "/text",
+          "contains": "當年度所獲得的街口幣，將於隔年度5/31到期"
+        },
+        "period": {
+          "pointer": "/text",
+          "contains": "(2026/1/1～2026/12/31所獲得的街口幣"
+        },
+        "locker": {
+          "pointer": "/text",
+          "contains": "「中華郵政ｉ郵箱」"
+        }
+      },
+      "approval": {
+        "by": "使用者核准（2026-10-26）",
+        "at": "2026-10-26T11:21:43+08:00",
+        "note": "使用者原話：「Q3 核准 jko.rate 205ae683…、jko.terms b228722a…、jko.tier 9c5669ee…」；段落指紋，渲染方式為預裝 Chrome。"
+      }
+    },
+    {
+      "id": "jko.tier",
+      "sourceCard": "jko_pay_announce",
+      "url": "https://www.jkopay.com/application/announce",
+      "role": "primary",
+      "format": "html",
+      "approvedSha256": "9c5669eea53f0538cc8680ff0c2bdce3a5fac7b006bfa1bc4ca86124a1ce5912",
+      "section": {
+        "start": "2024/4/22 各項支付工具回饋調整公告",
+        "end": "以持續享有最高 1% 付款回饋，歡迎您多加利用。"
+      },
+      "anchors": {
+        "tier": {
+          "pointer": "/text",
+          "contains": "1. 街口帳戶：維持 1% 街口幣回饋（銀牌以上會員）。"
+        }
+      },
+      "approval": {
+        "by": "使用者核准（2026-10-26）",
+        "at": "2026-10-26T11:21:43+08:00",
+        "note": "使用者原話：「Q3 核准 jko.rate 205ae683…、jko.terms b228722a…、jko.tier 9c5669ee…」；段落指紋，渲染方式為預裝 Chrome。"
+      }
+    }
+  ],
+  "fundingNotes": {
+    "bankAccount": "官方權益頁寫明銀行帳戶付款的回饋依各銀行公告（另卡 V2-S8），街口平台層 1% 只限街口帳戶餘額。",
+    "debitCard": "官方權益頁只寫街口帳戶與銀行帳戶，未分列簽帳金融卡；回饋依各銀行公告，街口平台層未建模。",
+    "creditCard": "街口官方活動頁寫明綁國內信用卡付款的回饋依各發卡銀行公告（權益公告亦寫依各信用卡不同），屬卡片層；街口平台層 1% 只限街口帳戶餘額。"
+  }
 }

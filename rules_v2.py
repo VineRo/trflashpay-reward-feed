@@ -23,7 +23,8 @@ SPEND_TYPES = {'general', 'insurance', 'installment', 'storedValue', 'utility', 
                'medical', 'topup', 'cashAdvance', 'fee', 'onboard'}
 LAYERS = {'L1', 'L2', 'L3'}
 RULE_KINDS = {'base', 'bonus'}
-ROUNDING_MODES = {'halfUp', 'floor', 'ceil'}
+# 'unknown': the terms publish no rounding, so one purchase is bracketed floor..ceil (V2-S7).
+ROUNDING_MODES = {'halfUp', 'floor', 'ceil', 'unknown'}
 ROUNDING_BASES = {'perTransaction', 'monthlyAggregate', 'perCampaign'}
 SCOPES = {'card', 'primaryAndSupplementary', 'household', 'account'}
 # QR code standards a scan can establish (V2-S6: TWQR stands).
@@ -33,7 +34,9 @@ SELECTOR_KINDS = {'plan', 'tier', 'flag', 'variant'}
 SELECTOR_SOURCES = {'userDeclared', 'issuerRecord'}
 CASH = {'yes', 'no', 'restricted'}
 CONFIDENCE = {'issuerList', 'brandOnly', 'mccOnly'}
-EVIDENCE_FORMATS = {'aemModel', 'html', 'pdf'}
+EVIDENCE_FORMATS = {'aemModel', 'html', 'pdf', 'json'}
+# Coverage reasons must say why, not merely that something is missing (V2-S10).
+VACUOUS_NOTES = {'未建模', '尚未建模', '未涵蓋', '無', 'n/a', 'na', 'tbd', 'todo'}
 EFFECTIVE_RULES = {'sameDayMidnight', 'nextDay', 'nextMonthFirstDay', 'immediate'}
 EFFECTIVE_BASES = {'authorizationDate', 'consumptionDate', 'postingDate'}
 REQUIRE_FIELDS = {'per': PERIODS, 'deadline': {'monthLastDay', 'campaignEnd'},
@@ -133,6 +136,22 @@ def _unique(items, where):
     ids = [item.get('id') if isinstance(item, dict) else None for item in items]
     if len(set(ids)) != len(ids):
         _fail(where, 'duplicate id')
+
+
+def canonical_json(value):
+    """One spelling of a JSON value: sorted keys, no padding, UTF-8 text (V2-S10)."""
+    return json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(',', ':'), allow_nan=False)
+
+
+def _strip_tags(value):
+    return re.sub(r'\s+', ' ', re.sub(r'<[^>]+>', ' ', value)).strip()
+
+
+def _note(value, where):
+    _text(value, where, 300)
+    bare = re.sub(r'[\s。.！!、，,]', '', value).lower()
+    if bare in VACUOUS_NOTES or len(value.strip()) < 10:
+        _fail(where, 'reason must state a checkable fact, not just that it is missing')
 
 
 def resolve_pointer(document, pointer):
@@ -280,6 +299,10 @@ def _validate_rate(rate, ctx, where):
     if kind == 'fixed':
         _keys(rate, where, {'type', 'percent'})
         _decimal(rate['percent'], f'{where} percent', positive=True, maximum=100)
+    elif kind == 'upTo':
+        # Only a maximum is published ("最高 X%"): the reward ranges from 0 to X% (V2-S7).
+        _keys(rate, where, {'type', 'percent'})
+        _decimal(rate['percent'], f'{where} percent', positive=True, maximum=100)
     elif kind == 'bySelector':
         _keys(rate, where, {'type', 'selector', 'table'})
         selector = ctx.selectors.get(rate['selector'])
@@ -404,7 +427,7 @@ def _validate_exclusion(item, ctx):
 def _validate_evidence(item):
     where = f"evidence {item.get('id') if isinstance(item, dict) else '?'}"
     _keys(item, where, {'id', 'sourceCard', 'url', 'role', 'format', 'approvedSha256', 'anchors', 'approval'},
-          {'section'})
+          {'section', 'quotaWatch', 'select'})
     _ident(item['id'], where)
     _ident(item['sourceCard'], where)
     if not isinstance(item['url'], str) or not item['url'].startswith('https://') or len(item['url']) > 500:
@@ -420,6 +443,9 @@ def _validate_evidence(item):
         _keys(anchor, f'{where} anchor {name}', {'pointer', 'contains'})
         if item['format'] in ('html', 'pdf') and anchor['pointer'] != '/text':
             _fail(where, 'HTML/PDF anchor pointer must be /text')
+        if item['format'] == 'json' and isinstance(item.get('select'), str) and isinstance(anchor.get('pointer'), str) \
+                and not (anchor['pointer'] + '/').startswith(item['select'].rstrip('/') + '/'):
+            _fail(where, 'JSON anchor must lie inside the approved select subtree')
         if not isinstance(anchor['pointer'], str) or not anchor['pointer'].startswith('/'):
             _fail(where, 'anchor pointer must be absolute')
         _text(anchor['contains'], where, 200)
@@ -432,6 +458,21 @@ def _validate_evidence(item):
             _text(item['section'][marker], where, 200)
         if item['section']['start'] == item['section']['end']:
             _fail(where, 'section markers must differ')
+    # JSON API evidence fingerprints only the selected subtree (V2-S10).
+    if (item['format'] == 'json') != ('select' in item):
+        _fail(where, 'select is required for, and only allowed on, JSON evidence')
+    if 'select' in item and (not isinstance(item['select'], str) or not item['select'].startswith('/')):
+        _fail(where, 'select must be an absolute JSON pointer')
+    if 'quotaWatch' in item:
+        # Sold-out notices are searched outside the approved sections (V2-S7).
+        if 'section' not in item:
+            _fail(where, 'quotaWatch needs an approved section')
+        _keys(item['quotaWatch'], f'{where} quotaWatch', {'phrases'})
+        phrases = _list(item['quotaWatch']['phrases'], f'{where} quotaWatch', maximum=10)
+        for phrase in phrases:
+            _text(phrase, f'{where} quotaWatch', 40)
+        if len(set(phrases)) != len(phrases):
+            _fail(where, 'quotaWatch phrases must be unique')
     _keys(item['approval'], where, {'by', 'at'}, {'note'})
     _text(item['approval']['by'], where, 120)
     _datetime(item['approval']['at'], where)
@@ -479,7 +520,7 @@ def _validate_selector(item):
 def _validate_program(program, units, merchant_sets):
     where = f"program {program.get('id') if isinstance(program, dict) else '?'}"
     _keys(program, where, {'id', 'issuer', 'name', 'rewardUnit', 'selectors', 'rules', 'exclusions', 'evidence'},
-          {'variants', 'notCovering'})
+          {'variants', 'notCovering', 'fundingNotes'})
     _ident(program['id'], where)
     _ident(program['issuer'], where)
     _text(program['name'], where, 120)
@@ -488,6 +529,12 @@ def _validate_program(program, units, merchant_sets):
     for key in ('variants', 'notCovering'):
         for value in _list(program[key], where, maximum=20) if key in program else []:
             _text(value, where, 300)
+    if 'fundingNotes' in program:
+        notes = program['fundingNotes']
+        if not isinstance(notes, dict) or not notes or not set(notes) <= FUNDING | {'*'}:
+            _fail(where, 'fundingNotes keys must be funding sources or *')
+        for value in notes.values():
+            _note(value, f'{where} fundingNotes')
     # A program of uncovered notes only makes no reward claim and needs no evidence.
     claims = any(isinstance(r, dict) and r.get('status') != 'uncovered' for r in program['rules']) or bool(program['exclusions'])
     for key, check, minimum in (('selectors', _validate_selector, 0), ('evidence', _validate_evidence, 1 if claims else 0)):
@@ -577,6 +624,20 @@ def _evidence_problem(item, evidence):
             return None, 'supporting source not collected'
     if observed.get('error'):
         return observed.get('sha256'), 'source unavailable'
+    if item['format'] == 'json':
+        try:
+            subtree = resolve_pointer(observed.get('json'), item['select'])
+        except (ValueError, TypeError):
+            return None, 'selected JSON subtree missing'
+        digest = hashlib.sha256(canonical_json(subtree).encode()).hexdigest()
+        for name, anchor in item['anchors'].items():
+            try:
+                value = resolve_pointer(observed['json'], anchor['pointer'])
+            except ValueError:
+                return digest, f'anchor {name} pointer missing'
+            if not isinstance(value, str) or anchor['contains'] not in _strip_tags(value):
+                return digest, f'anchor {name} text not found'
+        return digest, None if digest == item['approvedSha256'] else 'source changed since approval'
     if 'section' in item:
         try:
             section = section_text(observed.get('text'), item['section']['start'], item['section']['end'])
@@ -590,6 +651,33 @@ def _evidence_problem(item, evidence):
     if observed.get('sha256') != item['approvedSha256']:
         return observed.get('sha256'), 'source changed since approval'
     return observed.get('sha256'), None
+
+
+def _quota_notices(program, evidence):
+    """Watched sold-out phrases found outside every approved section of their source."""
+    found = []
+    for item in program['evidence']:
+        if 'quotaWatch' not in item:
+            continue
+        source = evidence.get(item['sourceCard'], {})
+        text = source.get('text') if source.get('url') == item['url'] and not source.get('error') else None
+        if not isinstance(text, str):
+            continue
+        outside = text
+        broken = False
+        for other in program['evidence']:
+            if other['sourceCard'] == item['sourceCard'] and 'section' in other:
+                try:
+                    # A separator keeps the text on either side from joining into a phrase.
+                    outside = outside.replace(section_text(text, other['section']['start'], other['section']['end']), '\n')
+                except ValueError:
+                    broken = True
+        if broken:
+            found.append(f"{item['id']}: quota watch unverifiable (section markers broken)")
+            continue
+        found += [f"{item['id']}: official page shows sold-out notice 額滿「{p}」"
+                  for p in item['quotaWatch']['phrases'] if p in outside]
+    return found
 
 
 def build_programs(catalog, evidence, now):
@@ -610,8 +698,11 @@ def build_programs(catalog, evidence, now):
 
         withdrawn = {}
         priced = [r for r in program['rules'] if r.get('status') != 'uncovered']
+        notices = _quota_notices(program, evidence)
         for rule in priced:
             reasons = failures(rule['evidenceRefs'])
+            if any(q.get('quota') == 'limited' for q in rule.get('requires', [])):
+                reasons += notices
             for item in limiting(rule):
                 if bad_exclusions[item['id']]:
                     reasons.append(f"exclusion {item['id']} unverifiable ({'; '.join(bad_exclusions[item['id']])})")

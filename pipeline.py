@@ -19,7 +19,7 @@ from html.parser import HTMLParser
 from pathlib import Path
 from urllib.parse import urlparse
 
-from rules_v2 import section_text  # noqa: F401  (re-exported for the pipeline's callers)
+from rules_v2 import canonical_json, resolve_pointer, section_text  # noqa: F401  (section_text re-exported)
 
 LIMIT = 2 * 1024 * 1024
 CUBE_SCHEME_URL = 'https://www.cathay-cube.com.tw/content/cub-aem-cs/zh-tw/cathaybk/personal/product/credit-card/cards/cube-list.model.json'
@@ -117,6 +117,84 @@ def fetch(url):
         return text
 
 
+API_BODY_LIMIT = 40 * 1024
+API_TIMEOUT = 30
+# These sites block headless browsers but serve the full terms to a plain
+# download; a browser must never be pointed at them (no disguising, V2-S10).
+PLAIN_DOWNLOAD_HOSTS = {'easywallet.easycard.com.tw', 'www.icashpay.com.tw'}
+
+
+def _https_only(url):
+    parsed = urlparse(url)
+    if parsed.scheme != 'https' or not parsed.hostname or parsed.username or parsed.password:
+        raise ValueError('Only HTTPS sources without credentials are allowed')
+    return parsed
+
+
+def _api_transport(url, method, data, headers, timeout):
+    request = urllib.request.Request(url, data=data, headers=headers, method=method)
+    with urllib.request.build_opener(SameHostRedirect()).open(request, timeout=timeout) as response:
+        return response.status, response.read(LIMIT + 1)
+
+
+def _json_strings(value):
+    if isinstance(value, dict):
+        for child in value.values():
+            yield from _json_strings(child)
+    elif isinstance(value, list):
+        for child in value:
+            yield from _json_strings(child)
+    elif isinstance(value, str):
+        yield value
+
+
+def fetch_api(source, transport=_api_transport):
+    """Call a registered official JSON API (V2-S10): no login, cookies or custom auth."""
+    _https_only(source['url'])
+    method = source.get('method', 'GET')
+    if method not in ('GET', 'POST'):
+        raise ValueError('API method must be GET or POST')
+    if not isinstance(source.get('okPointer'), str) or 'okValue' not in source:
+        raise ValueError('API source needs okPointer and okValue')
+    data = None
+    headers = {'User-Agent': 'TRFlashPay-Official-Rules-Monitor/1.0', 'Accept': 'application/json'}
+    if method == 'POST':
+        data = json.dumps(source.get('body', {}), ensure_ascii=False).encode()
+        if len(data) > API_BODY_LIMIT:
+            raise ValueError('API request body exceeds limit')
+        headers['Content-Type'] = 'application/json'
+    status, raw = transport(source['url'], method, data, headers, API_TIMEOUT)
+    if status != 200:
+        raise ValueError('Official API did not return 200')
+    if len(raw) > LIMIT:
+        raise ValueError('Official API response exceeds size limit')
+    try:
+        value = json.loads(raw.decode('utf-8'))
+    except (UnicodeDecodeError, ValueError):
+        raise ValueError('Official API did not return JSON')
+    try:
+        ok = resolve_pointer(value, source['okPointer'])
+    except ValueError:
+        raise ValueError('Official API status field missing')
+    if ok != source['okValue']:
+        raise ValueError(f'Official API reported failure ({ok!r})')
+    text = re.sub(r'\s+', ' ', ' '.join(normalize(s) for s in _json_strings(value))).strip()
+    return {'json': value, 'text': text}
+
+
+def fetch_raw(url):
+    """An official page's HTML as served (discovery listings), with the same HTTPS and size limits."""
+    _https_only(url)
+    request = urllib.request.Request(url, headers={'User-Agent': 'TRFlashPay-Official-Rules-Monitor/1.0'})
+    with urllib.request.build_opener(SameHostRedirect()).open(request, timeout=20) as response:
+        if response.status != 200:
+            raise ValueError('Official source did not return 200')
+        data = response.read(LIMIT + 1)
+        if len(data) > LIMIT:
+            raise ValueError('Official source exceeds size limit')
+        return data.decode(response.headers.get_content_charset() or 'utf-8', errors='strict')
+
+
 CHROME_CANDIDATES = ('google-chrome', 'google-chrome-stable', 'chromium', 'chromium-browser',
                      '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome')
 RENDER_TIMEOUT = 60
@@ -208,9 +286,10 @@ def write_json(path, value):
     os.replace(name, path)
 
 
-def collect(sources, downloader=fetch, proof_downloader=fetch_proof, renderer=None):
+def collect(sources, downloader=fetch, proof_downloader=fetch_proof, renderer=None, api_fetcher=None):
     result, documents, proofs = {}, {}, {}
     renderer = renderer or render_chrome
+    api_fetcher = api_fetcher or fetch_api
     for source in sources:
         cid = source['cardId']
         if cid in result:
@@ -219,12 +298,22 @@ def collect(sources, downloader=fetch, proof_downloader=fetch_proof, renderer=No
         mode = source.get('render')
         if mode not in (None, 'chrome'):
             raise ValueError('Unknown render mode')
-        key = (url, mode)
+        api = source.get('fetch')
+        if api not in (None, 'api') or (api and mode):
+            raise ValueError('Unknown fetch mode, or fetch combined with render')
+        if mode and urlparse(url).hostname in PLAIN_DOWNLOAD_HOSTS:
+            raise ValueError('This site blocks headless browsers; register it for plain download')
+        key = (url, mode, api, json.dumps(source.get('body'), sort_keys=True))
         if key not in documents:
             try:
-                text = (renderer if mode else downloader)(url)
-                documents[key] = {'url': url, 'text': text,
-                                  'sha256': hashlib.sha256(text.encode()).hexdigest()}
+                if api:
+                    fetched = api_fetcher(source)
+                    documents[key] = {'url': url, 'json': fetched['json'], 'text': fetched['text'], 'fetch': 'api',
+                                      'sha256': hashlib.sha256(canonical_json(fetched['json']).encode()).hexdigest()}
+                else:
+                    text = (renderer if mode else downloader)(url)
+                    documents[key] = {'url': url, 'text': text,
+                                      'sha256': hashlib.sha256(text.encode()).hexdigest()}
                 if mode:
                     documents[key]['render'] = mode
             except Exception as error:
@@ -276,7 +365,13 @@ def load_platform_registry(root):
     return json.loads(path.read_text()) if path.exists() else []
 
 
-def build_feed(approved, evidence, coverage, now=None, wallet_evidence=None, programs=None, platform_evidence=None):
+def load_platform_map(root):
+    """Payment app -> platform program, mirroring the App's platformPrograms (V2-S10)."""
+    return json.loads((Path(root) / 'platform_map.json').read_text())
+
+
+def build_feed(approved, evidence, coverage, now=None, wallet_evidence=None, programs=None, platform_evidence=None,
+               platform_map=None):
     now = now or datetime.now(timezone.utc)
     if not isinstance(coverage, list) or not coverage or len(set(coverage)) != len(coverage):
         raise ValueError('Invalid managed catalog')
@@ -324,6 +419,11 @@ def build_feed(approved, evidence, coverage, now=None, wallet_evidence=None, pro
         published, program_pending = build_programs(programs, {**evidence, **platform_evidence}, now)
         v2 = {'programsSchemaVersion': PROGRAMS_SCHEMA_VERSION, 'rewardUnits': programs['rewardUnits'],
               'merchantSets': programs['merchantSets'], 'programs': published, 'programPending': program_pending}
+        if platform_map is not None:
+            # Every payment app x funding cell must be modeled, withdrawn or reasoned.
+            from coverage_table import build_platform_coverage
+            v2['platformCoverage'] = build_platform_coverage(programs, published, program_pending, platform_map,
+                                                             as_of=now.isoformat())
     return {
         **v2,
         'walletCampaigns': campaigns, 'walletCampaignPending': campaign_pending,
@@ -338,6 +438,38 @@ def build_feed(approved, evidence, coverage, now=None, wallet_evidence=None, pro
     }
 
 
+DISCOVERY_PREVIOUS_URL = 'https://vinero.github.io/trflashpay-reward-feed/discovery.json'
+
+
+def run_discovery(root, generated_at, collector=None, previous_loader=None):
+    """Campaign discovery for people to classify; it never changes the rules and never fails the run."""
+    import discovery
+    today = generated_at[:10]
+    try:
+        today = datetime.fromisoformat(generated_at).astimezone(timezone(timedelta(hours=8))).date().isoformat()
+        sources = (collector or discovery.collect_discovery)(discovery.load_sources(root))
+        known = json.loads((Path(root) / 'discovery_known.json').read_text())
+        try:
+            previous = (previous_loader or (lambda: json.loads(fetch_raw(DISCOVERY_PREVIOUS_URL))))()
+        except Exception:
+            previous = None
+        items = [i for v in sources.values() for i in v['items']]
+        report = discovery.diff(discovery.classify(items, known, today), known, previous, today,
+                                failed={k for k, v in sources.items() if v.get('error')})
+        summary = discovery.summary_markdown(report, sources, today)
+    except Exception as error:
+        sources, report = {}, {'generatedFor': today, 'error': f'discovery failed: {error}'}
+        summary = f'## 活動自動發現\n\n- ❌ 發現流程失敗：{error}\n'
+    step = os.environ.get('GITHUB_STEP_SUMMARY')
+    if step:
+        try:
+            with open(step, 'a', encoding='utf-8') as file:
+                file.write(summary)
+        except OSError:
+            pass
+    return report, sources
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--publish', action='store_true')
@@ -350,6 +482,7 @@ def main():
     validate_catalog(programs)
     platform_registry = load_platform_registry(root)
     check_sources(programs, registry + platform_registry)
+    platform_map = load_platform_map(root)
     evidence = collect(registry)
     write_json(root / 'artifacts' / 'evidence.json', evidence)
     platform_evidence = collect(platform_registry)
@@ -359,11 +492,16 @@ def main():
     if args.publish:
         feed = build_feed(json.loads((root / 'approved.json').read_text()), evidence,
                           json.loads((root / 'catalog.json').read_text()), wallet_evidence=wallet_evidence,
-                          programs=programs, platform_evidence=platform_evidence)
+                          programs=programs, platform_evidence=platform_evidence, platform_map=platform_map)
+        platform_coverage = feed.pop('platformCoverage')
         from eligibility_audit import build_eligibility_audit
         audit = build_eligibility_audit(feed, evidence)
         write_json(root / 'public' / 'eligibility-audit.json', audit)
         write_json(root / 'public' / 'rules.json', feed)
+        write_json(root / 'public' / 'coverage.json', {'generatedAt': feed['generatedAt'], **platform_coverage})
+        # Discovery runs only after the feed is on disk, under its own time budget.
+        discovery_report, discovery_sources = run_discovery(root, feed['generatedAt'])
+        write_json(root / 'public' / 'discovery.json', discovery_report)
         write_json(root / 'public' / 'status.json', {
             'generatedAt': feed['generatedAt'], 'expiresAt': feed['expiresAt'],
             'publishedRuleCount': len(feed['rules']),
@@ -380,8 +518,14 @@ def main():
             'conditionalRateOnlyPlanCount': sum(p['calculation'] is not None and p['calculation']['rounding'] == 'notModeled' for p in feed['assessmentProfiles'].values()),
             'fullyModeledCardCount': 0,
             'readableSourceCount': sum(bool(value.get('text')) for value in evidence.values()),
-            'platformSources': {sid: {'url': v['url'], 'render': v.get('render'), 'sha256': v.get('sha256'),
-                                      'error': v.get('error')} for sid, v in platform_evidence.items()},
+            'platformSources': {sid: {'url': v['url'], 'render': v.get('render'), 'fetch': v.get('fetch'),
+                                      'sha256': v.get('sha256'), 'error': v.get('error')}
+                                for sid, v in platform_evidence.items()},
+            'platformCoverage': platform_coverage['summary'],
+            'discovery': {'new': len(discovery_report.get('new', [])), 'changed': len(discovery_report.get('changed', [])),
+                          'gone': len(discovery_report.get('gone', [])),
+                          'sourceErrors': {k: v['error'] for k, v in discovery_sources.items() if v.get('error')},
+                          'error': discovery_report.get('error')},
             'sources': {cid: {'url': value['url'], 'sha256': value.get('sha256'),
                                'error': value.get('error'),
                                'supportingSources': value.get('supportingSources', {})}

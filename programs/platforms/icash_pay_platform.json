@@ -1,0 +1,22 @@
+{
+  "id": "icash_pay_platform",
+  "issuer": "icash",
+  "name": "icash Pay",
+  "rewardUnit": "icash_openpoint",
+  "selectors": [],
+  "exclusions": [],
+  "evidence": [],
+  "notCovering": [
+    "icash Pay 官方活動頁可用一般下載讀取：「週日最好Pay」待 V2-S11 建模（需星期、單筆門檻與逐月額滿偵測），綁聯名卡加碼另卡 V2-S8。"
+  ],
+  "rules": [
+    {
+      "id": "icashpay.base",
+      "layer": "L2",
+      "kind": "base",
+      "group": "icashpay.main",
+      "status": "uncovered",
+      "notes": "icash Pay 官方活動頁可用一般下載讀取：「週日最好Pay」待 V2-S11 建模（需星期、單筆門檻與逐月額滿偵測），綁聯名卡加碼另卡 V2-S8。"
+    }
+  ]
+}

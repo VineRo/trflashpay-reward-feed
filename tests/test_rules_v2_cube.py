@@ -49,12 +49,20 @@ def platform_registry():
 
 
 IPASS_SNAPSHOT = ROOT / 'audit/v2-s6_20261025/ipass-rendered.txt'
+# Saved Chrome-rendered official JKO pages (approved 2026-10-26).
+PLATFORM_SNAPSHOTS = {
+    'ipass_money_platform': IPASS_SNAPSHOT,
+    'jko_pay_platform': ROOT / 'audit/v2-s7_20261026/jko-payment-rendered.txt',
+    'jko_pay_announce': ROOT / 'audit/v2-s7_20261026/jko-announce-rendered.txt',
+}
 
 
 def reviewed_platform_evidence():
-    """Platform sources from the saved Chrome-rendered official text (approved 2026-10-25)."""
-    snapshots = {s['url']: IPASS_SNAPSHOT for s in platform_registry() if s['cardId'] == 'ipass_money_platform'}
-    return collect(platform_registry(), downloader=lambda url: None, proof_downloader=lambda url: {},
+    """Platform sources from the saved Chrome-rendered official text (approved 2026-10-25/26)."""
+    # Monitoring-only sources (no approved evidence yet, V2-S10) have no saved snapshot.
+    saved = [s for s in platform_registry() if s['cardId'] in PLATFORM_SNAPSHOTS]
+    snapshots = {s['url']: PLATFORM_SNAPSHOTS[s['cardId']] for s in saved}
+    return collect(saved, downloader=lambda url: None, proof_downloader=lambda url: {},
                    renderer=lambda url: snapshots[url].read_text())
 
 

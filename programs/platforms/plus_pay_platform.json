@@ -1,0 +1,22 @@
+{
+  "id": "plus_pay_platform",
+  "issuer": "pluspay",
+  "name": "全盈+PAY",
+  "rewardUnit": "pluspay_points",
+  "selectors": [],
+  "exclusions": [],
+  "evidence": [],
+  "notCovering": [
+    "全盈+PAY 目前未見可讀、適用掃店家 QR 的常態平台回饋條款；平台層未建模。"
+  ],
+  "rules": [
+    {
+      "id": "pluspay.base",
+      "layer": "L2",
+      "kind": "base",
+      "group": "pluspay.main",
+      "status": "uncovered",
+      "notes": "全盈+PAY 目前未見可讀、適用掃店家 QR 的常態平台回饋條款；平台層未建模。"
+    }
+  ]
+}

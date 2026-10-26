@@ -3,5 +3,23 @@
     "cardId": "ipass_money_platform",
     "url": "https://www.i-pass.com.tw/Preferential/Detail/GMZTIMYKIEY7I64rUuoF",
     "render": "chrome"
+  },
+  {
+    "cardId": "jko_pay_platform",
+    "url": "https://mkt.jkopay.com/event/jkopayment",
+    "render": "chrome"
+  },
+  {
+    "cardId": "jko_pay_announce",
+    "url": "https://www.jkopay.com/application/announce",
+    "render": "chrome"
+  },
+  {
+    "cardId": "easywallet_friday",
+    "url": "https://easywallet.easycard.com.tw/benefit/content?id=1747884970"
+  },
+  {
+    "cardId": "icash_pay_sunday",
+    "url": "https://www.icashpay.com.tw/advertMessage/view/id/2284"
   }
 ]

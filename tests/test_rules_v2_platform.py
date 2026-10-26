@@ -224,7 +224,8 @@ class RealPlatformDataTests(unittest.TestCase):
         self.catalog = load_catalog(Path(__file__).resolve().parents[1] / 'programs')
 
     def test_unmodeled_platforms_state_a_reason_and_claim_nothing(self):
-        ids = {'jko_pay_platform', 'pxplus_platform', 'line_pay_platform', 'taiwan_pay_platform'}
+        ids = {'pxplus_platform', 'line_pay_platform', 'taiwan_pay_platform', 'easy_wallet_platform',
+               'icash_pay_platform', 'pi_wallet_platform', 'esun_wallet_platform', 'plus_pay_platform'}
         programs = {p['id']: p for p in self.catalog['programs'] if p['id'] in ids}
         self.assertEqual(set(programs), ids)
         for pid, program in programs.items():
@@ -242,12 +243,14 @@ class RealPlatformDataTests(unittest.TestCase):
     def test_unmodeled_platforms_publish_without_sources(self):
         published, pending = build_programs(self.catalog, {}, NOW)
         ids = {p['id'] for p in published}
-        self.assertTrue({'jko_pay_platform', 'line_pay_platform'} <= ids)
-        # Only the priced iPASS rule needs its (here absent) source; reason-only platforms never do.
-        self.assertEqual({k.split('/')[0] for k in pending if k.split('/')[0].endswith('_platform')}, {'ipass_money_platform'})
+        self.assertTrue({'easy_wallet_platform', 'line_pay_platform'} <= ids)
+        # Only the priced iPASS and JKO rules need their (here absent) sources; reason-only platforms never do.
+        self.assertEqual({k.split('/')[0] for k in pending if k.split('/')[0].endswith('_platform')},
+                         {'ipass_money_platform', 'jko_pay_platform'})
 
 
 from project_evidence import requires_project_evidence  # noqa: E402
+from test_rules_v2_cube import platform_registry  # noqa: E402
 
 
 class RealIpassTests(unittest.TestCase):
@@ -256,10 +259,9 @@ class RealIpassTests(unittest.TestCase):
     def setUp(self):
         from pathlib import Path
         from rules_v2 import load_catalog
-        from test_rules_v2_cube import platform_registry
         self.catalog = load_catalog(Path(__file__).resolve().parents[1] / 'programs')
         self.program = next(p for p in self.catalog['programs'] if p['id'] == 'ipass_money_platform')
-        self.registry = platform_registry()
+        self.registry = [s for s in platform_registry() if s['cardId'] == 'ipass_money_platform']
 
     def rule(self):
         return next(r for r in self.program['rules'] if r['id'] == 'ipass.twqr.scan')
@@ -269,7 +271,7 @@ class RealIpassTests(unittest.TestCase):
         self.assertEqual(self.registry, [{'cardId': 'ipass_money_platform', 'render': 'chrome',
                                           'url': 'https://www.i-pass.com.tw/Preferential/Detail/GMZTIMYKIEY7I64rUuoF'}])
         validate_catalog(self.catalog)
-        check_sources(self.catalog, registry() + self.registry)
+        check_sources(self.catalog, registry() + platform_registry())
 
     def test_rule_matches_the_official_terms(self):
         r = self.rule()
@@ -332,14 +334,15 @@ class RealIpassTests(unittest.TestCase):
             with self.subTest(name):
                 evidence = collect(self.registry, downloader=str, proof_downloader=dict, renderer=lambda u: changed)
                 feed = build_feed([], reviewed_evidence(), ['cathay_cube', 'fubon_costco'], NOW, programs=self.catalog,
-                                  platform_evidence=evidence)
+                                  platform_evidence={**reviewed_platform_evidence(), **evidence})
                 withdrawn = 'ipass_money_platform/ipass.twqr.scan' in feed['programPending']
                 self.assertEqual(withdrawn, name != 'carousel only', feed['programPending'])
                 self.assertEqual({p['id']: p for p in feed['programs'] if p['id'] != 'ipass_money_platform'}, others)
         def fail(u):
             raise ValueError('Official source render timed out')
         feed = build_feed([], reviewed_evidence(), ['cathay_cube', 'fubon_costco'], NOW, programs=self.catalog,
-                          platform_evidence=collect(self.registry, downloader=str, proof_downloader=dict, renderer=fail))
+                          platform_evidence={**reviewed_platform_evidence(),
+                                             **collect(self.registry, downloader=str, proof_downloader=dict, renderer=fail)})
         self.assertIn('ipass_money_platform/ipass.twqr.scan', feed['programPending'])
         self.assertTrue(url)
 

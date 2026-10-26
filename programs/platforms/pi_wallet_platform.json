@@ -1,0 +1,22 @@
+{
+  "id": "pi_wallet_platform",
+  "issuer": "pi",
+  "name": "Pi 拍錢包",
+  "rewardUnit": "pi_points",
+  "selectors": [],
+  "exclusions": [],
+  "evidence": [],
+  "notCovering": [
+    "Pi 拍錢包的回饋主要來自綁定的玉山卡片（卡片層），未見平台本身針對掃 TWQR 的常態回饋條款；平台層未建模。"
+  ],
+  "rules": [
+    {
+      "id": "piwallet.base",
+      "layer": "L2",
+      "kind": "base",
+      "group": "piwallet.main",
+      "status": "uncovered",
+      "notes": "Pi 拍錢包的回饋主要來自綁定的玉山卡片（卡片層），未見平台本身針對掃 TWQR 的常態回饋條款；平台層未建模。"
+    }
+  ]
+}

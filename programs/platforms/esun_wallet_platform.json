@@ -1,0 +1,22 @@
+{
+  "id": "esun_wallet_platform",
+  "issuer": "esun",
+  "name": "玉山 Wallet",
+  "rewardUnit": "esun_points",
+  "selectors": [],
+  "exclusions": [],
+  "evidence": [],
+  "notCovering": [
+    "玉山 Wallet 的回饋來自玉山卡片權益（卡片層），未見平台本身針對掃碼的常態回饋條款；平台層未建模。"
+  ],
+  "rules": [
+    {
+      "id": "esunwallet.base",
+      "layer": "L2",
+      "kind": "base",
+      "group": "esunwallet.main",
+      "status": "uncovered",
+      "notes": "玉山 Wallet 的回饋來自玉山卡片權益（卡片層），未見平台本身針對掃碼的常態回饋條款；平台層未建模。"
+    }
+  ]
+}

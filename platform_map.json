@@ -1,0 +1,12 @@
+{
+  "ipassMoney": "ipass_money_platform",
+  "jkoPay": "jko_pay_platform",
+  "pxPlus": "pxplus_platform",
+  "linePay": "line_pay_platform",
+  "taiwanPay": "taiwan_pay_platform",
+  "easyWallet": "easy_wallet_platform",
+  "icashPay": "icash_pay_platform",
+  "piWallet": "pi_wallet_platform",
+  "esunWallet": "esun_wallet_platform",
+  "plusPay": "plus_pay_platform"
+}

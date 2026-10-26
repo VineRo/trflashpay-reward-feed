@@ -17,6 +17,8 @@ HAS_PROJECT_EVIDENCE = all((PROJECT_ROOT / p).exists() for p in (
     'audit/reward_schema_v2_20261024/fubon-costco.htm',
     'test/fixtures/rules_v2_programs_block.json',
     'audit/v2-s6_20261025/ipass-rendered.txt',
+    'audit/v2-s7_20261026/jko-payment-rendered.txt',
+    'audit/v2-s7_20261026/jko-announce-rendered.txt',
 ))
 
 requires_project_evidence = unittest.skipUnless(

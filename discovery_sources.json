@@ -1,0 +1,12 @@
+[
+  {"id": "taiwanPay", "kind": "taiwanpay",
+   "listUrl": "https://www.taiwanpay.com.tw/tpay/v1.0.0/950/taiwanpayfapi/TF02/TF020109",
+   "detailUrl": "https://www.taiwanpay.com.tw/tpay/v1.0.0/950/taiwanpayfapi/TF02/TF020110",
+   "pageBase": "https://www.taiwanpay.com.tw/fisc-tpay/news/event/"},
+  {"id": "easyWallet", "kind": "easywallet",
+   "listUrl": "https://easywallet.easycard.com.tw/benefit",
+   "detailBase": "https://easywallet.easycard.com.tw/benefit/content?id="},
+  {"id": "icashPay", "kind": "icash",
+   "listUrl": "https://www.icashpay.com.tw/advertMessage/index",
+   "detailBase": "https://www.icashpay.com.tw/advertMessage/view/id/"}
+]

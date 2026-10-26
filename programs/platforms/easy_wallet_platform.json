@@ -1,0 +1,22 @@
+{
+  "id": "easy_wallet_platform",
+  "issuer": "easycard",
+  "name": "悠遊付",
+  "rewardUnit": "easywallet_points",
+  "selectors": [],
+  "exclusions": [],
+  "evidence": [],
+  "notCovering": [
+    "悠遊付官方條款可用一般下載讀取：「週五會員日」等全平台活動待 V2-S11 建模（需新增星期條件），其餘活動多限定店家或指定銀行（另卡 V2-S8／V2-S9）。"
+  ],
+  "rules": [
+    {
+      "id": "easywallet.base",
+      "layer": "L2",
+      "kind": "base",
+      "group": "easywallet.main",
+      "status": "uncovered",
+      "notes": "悠遊付官方條款可用一般下載讀取：「週五會員日」等全平台活動待 V2-S11 建模（需新增星期條件），其餘活動多限定店家或指定銀行（另卡 V2-S8／V2-S9）。"
+    }
+  ]
+}
